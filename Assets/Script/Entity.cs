@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class Entity : MonoBehaviour
 {
+    private static readonly int XVelocityHash = Animator.StringToHash("Xvelocity");
+    private static readonly int YVelocityHash = Animator.StringToHash("Yvelocity");
+    private static readonly int IsGroundedHash = Animator.StringToHash("isGrounded");
+
     //protected UI ui;
     protected Animator anim;
     protected Rigidbody2D rb;
@@ -35,6 +39,10 @@ public class Entity : MonoBehaviour
 
     protected bool isGrounded;
 
+    private bool hasXVelocityParameter;
+    private bool hasYVelocityParameter;
+    private bool hasIsGroundedParameter;
+
     protected virtual void Awake()
     {
         //ui = FindFirstObjectByType<UI>();
@@ -43,6 +51,13 @@ public class Entity : MonoBehaviour
         anim = GetComponentInChildren<Animator>();
         sr = GetComponentInChildren<SpriteRenderer>();
         currentHealth = maxHealth;
+
+        foreach (AnimatorControllerParameter parameter in anim.parameters)
+        {
+            hasXVelocityParameter |= parameter.nameHash == XVelocityHash;
+            hasYVelocityParameter |= parameter.nameHash == YVelocityHash;
+            hasIsGroundedParameter |= parameter.nameHash == IsGroundedHash;
+        }
 
     }
 
@@ -115,9 +130,14 @@ public class Entity : MonoBehaviour
 
     protected void HandleAnimations()
     {
-        anim.SetFloat("Xvelocity", rb.linearVelocity.x);
-        anim.SetFloat("Yvelocity", rb.linearVelocity.y);
-        anim.SetBool("isGrounded", isGrounded);
+        if (hasXVelocityParameter)
+            anim.SetFloat(XVelocityHash, rb.linearVelocity.x);
+
+        if (hasYVelocityParameter)
+            anim.SetFloat(YVelocityHash, rb.linearVelocity.y);
+
+        if (hasIsGroundedParameter)
+            anim.SetBool(IsGroundedHash, isGrounded);
     }
 
 

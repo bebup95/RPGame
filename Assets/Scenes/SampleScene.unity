@@ -2060,7 +2060,7 @@ MonoBehaviour:
   respawnPoints:
   - {fileID: 1132917456}
   - {fileID: 2094447298}
-  coolDown: 0
+  coolDown: 3
   coolDownDecreaseRate: 0.05
   coolDownCap: 0.7
 --- !u!4 &941631077
