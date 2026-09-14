@@ -1,6 +1,4 @@
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Windows;
 
 public class Enemy : Entity
 {
@@ -42,7 +40,11 @@ public class Enemy : Entity
     {
         base.Die();
         //Destroy(gameObject, 1f);
-        UI.Instance.AddKillCount();
+        UI ui = UI.Instance;
+        if (ui != null)
+        {
+            ui.AddKillCount();
+        }
     }
 
 }

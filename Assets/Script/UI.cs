@@ -1,11 +1,23 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 public class UI : MonoBehaviour
 {
-    public static UI Instance;
+    private static UI instance;
+
+    public static UI Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = FindFirstObjectByType<UI>();
+            }
+
+            return instance;
+        }
+    }
 
     [SerializeField] private GameObject gameOverUI;
     [Space]
@@ -15,13 +27,27 @@ public class UI : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
         Time.timeScale = 1;
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+        {
+            instance = null;
+        }
     }
 
     private void Update()
     {
-        timerText.text = Time.time.ToString("F2") + "s";
+        timerText.text = Time.timeSinceLevelLoad.ToString("F2") + "s";
     }
 
     public void EnableGameOverUI()

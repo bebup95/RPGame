@@ -19,6 +19,7 @@ public class Entity : MonoBehaviour
     [SerializeField] private Material damageMaterial;
     [SerializeField] private float damagefeedbackDuration = 0.1f;
     private Coroutine damageFeedbackCoroutine;
+    private Material originalMaterial;
 
     [Header("Attack details")]
     [SerializeField] protected float attackRadius;
@@ -50,6 +51,7 @@ public class Entity : MonoBehaviour
         col = GetComponent<Collider2D>();
         anim = GetComponentInChildren<Animator>();
         sr = GetComponentInChildren<SpriteRenderer>();
+        originalMaterial = sr.material;
         currentHealth = maxHealth;
 
         foreach (AnimatorControllerParameter parameter in anim.parameters)
@@ -108,16 +110,15 @@ public class Entity : MonoBehaviour
         {
             StopCoroutine(damageFeedbackCoroutine);
         }
-        StartCoroutine(DamageFeedbackCo());
+        damageFeedbackCoroutine = StartCoroutine(DamageFeedbackCo());
     }
 
     private IEnumerator DamageFeedbackCo()
     {
-        Material originalMat = sr.material;
-
         sr.material = damageMaterial;
         yield return new WaitForSeconds(damagefeedbackDuration);
-        sr.material = originalMat;
+        sr.material = originalMaterial;
+        damageFeedbackCoroutine = null;
     }
 
 

@@ -16,6 +16,20 @@ public class Enemy_Respawner : MonoBehaviour
 
     private void Awake()
     {
+        if (enemyPrefab == null || !enemyPrefab.TryGetComponent(out Enemy _))
+        {
+            Debug.LogError("Enemy Respawner requires a prefab with an Enemy component.", this);
+            enabled = false;
+            return;
+        }
+
+        if (respawnPoints == null || respawnPoints.Length == 0)
+        {
+            Debug.LogError("Enemy Respawner requires at least one respawn point.", this);
+            enabled = false;
+            return;
+        }
+
         // Kiểm tra xem player có tồn tại không để tránh lỗi NullReference
         Player playerObj = FindFirstObjectByType<Player>();
         if (playerObj != null)
@@ -46,17 +60,28 @@ public class Enemy_Respawner : MonoBehaviour
     private void CreateNewEnemy()
     {
         // Đề phòng trường hợp bạn quên kéo Respawn Points vào Inspector
-        if (respawnPoints.Length == 0) return;
+        if (enemyPrefab == null || respawnPoints == null || respawnPoints.Length == 0)
+            return;
 
         int respawnPointIndex = Random.Range(0, respawnPoints.Length);
-        Vector3 spawnPoint = respawnPoints[respawnPointIndex].position;
+        Transform respawnPoint = respawnPoints[respawnPointIndex];
+        if (respawnPoint == null)
+        {
+            Debug.LogError("Enemy Respawner contains an unassigned respawn point.", this);
+            return;
+        }
+
+        Vector3 spawnPoint = respawnPoint.position;
 
         GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint, Quaternion.identity);
 
         // Đảm bảo player không bị null trước khi so sánh vị trí
         if (player != null && newEnemy.transform.position.x > player.position.x)
         {
-            newEnemy.GetComponent<Enemy>().Flip();
+            if (newEnemy.TryGetComponent(out Enemy enemy))
+            {
+                enemy.Flip();
+            }
         }
     }
 }

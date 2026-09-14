@@ -49,6 +49,10 @@ public class Player : Entity
     protected override void Die()
     {
         base.Die();
-        UI.Instance.EnableGameOverUI();
+        UI ui = UI.Instance;
+        if (ui != null)
+        {
+            ui.EnableGameOverUI();
+        }
     }
 }
