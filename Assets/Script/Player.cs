@@ -8,10 +8,29 @@ public class Player : Entity
     private float xInput;
     private bool canJump = true;
 
+    private EntityStateMachine stateMachine;
+
+    internal float HorizontalInput => xInput;
+    internal PlayerIdleState IdleState { get; private set; }
+    internal PlayerMoveState MoveState { get; private set; }
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        stateMachine = new EntityStateMachine();
+        IdleState = new PlayerIdleState(this, stateMachine);
+        MoveState = new PlayerMoveState(this, stateMachine);
+        stateMachine.Initialize(IdleState);
+    }
+
     protected override void Update()
     {
-        base.Update();
+        HandleCollision();
         HandleInputs();
+        stateMachine.UpdateActiveState();
+        HandleAnimations();
+        HandleFlip();
     }
 
     private void HandleInputs()
@@ -27,10 +46,15 @@ public class Player : Entity
 
     protected override void HandleMovement()
     {
-        if (canMove)
-            rb.linearVelocity = new Vector2(xInput * moveSpeed, rb.linearVelocity.y);
-        else
-            rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+        float horizontalVelocity = canMove ? xInput * moveSpeed : 0f;
+        SetHorizontalVelocity(horizontalVelocity);
+    }
+
+    internal void ApplyHorizontalMovement() => HandleMovement();
+
+    internal void SetHorizontalVelocity(float horizontalVelocity)
+    {
+        rb.linearVelocity = new Vector2(horizontalVelocity, rb.linearVelocity.y);
     }
 
     private void TryToJump()

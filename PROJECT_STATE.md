@@ -8,18 +8,18 @@ This is the durable project handoff. It records verified facts, decisions, compl
 
 RPGame is a small single-scene 2D action game. The player moves and jumps in a fixed side-view arena, protects a stationary character, and defeats enemies that spawn from both sides with an accelerating cadence. The run shows elapsed time and kill count and reaches Game Over when the player or protected character dies.
 
-The core loop exists and the project opens in Unity 6. Milestone 0 was frozen and smoke-tested on 2026-09-17. All runtime branches passed; sustained physical keyboard movement/jump remains a manual feel check because desktop automation cannot hold those inputs reliably. The two baseline design decisions are now fixed: Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. This project is still in development: automated tests are absent and a standalone build verification has not yet been recorded.
+The core loop exists and the project opens in Unity 6. Milestone 0 was frozen and smoke-tested on 2026-09-17. All runtime branches passed; sustained physical keyboard movement/jump remains a manual feel check because desktop automation cannot hold those inputs reliably. The two baseline design decisions are now fixed: Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. Milestone 1 now has compiled state-machine primitives plus Player Idle/Move states; jump and attack remain on the verified legacy path. This project is still in development: automated tests are absent and a standalone build verification has not yet been recorded.
 
 ## Verified environment
 
 - Repository: `/Users/lenhat/Developer/RPGame-main`
-- Git: repository present; latest commit at this audit was `9159419` (`Refactor enemy and UI interactions; improve null checks and singleton pattern`).
+- Git: Milestone 1 work started from merged `origin/main` commit `4a88cd2` on branch `codex/milestone-1-fsm-foundation`.
 - Unity: `6000.0.72f1` (`b731fd3ae857`).
 - Entry scene: `Assets/Scenes/SampleScene.unity`; it is the only enabled build scene.
 - Packages include URP `17.0.4`, Input System `1.19.0`, uGUI `2.0.0`, Test Framework `1.6.0`, and Unity MCP `v10.0.0` from CoplayDev.
 - Codex Unity MCP endpoint: `http://127.0.0.1:8080/mcp`.
 - Unity MCP is connected and responding through HTTP. On 2026-09-17 it reported one active instance, `RPGame-main@5489ec430c09e367`, with the correct project root and Unity version. Five consecutive read cycles completed successfully without stale state or routing failures (about 1.5–1.8 seconds per cycle).
-- Authored asset inventory at this audit: 7 C# runtime scripts, 1 gameplay prefab, 3 Animator Controllers, 3 materials, and 2 scenes (one gameplay scene plus the URP scene template).
+- Authored asset inventory at this audit: 12 C# runtime scripts, 1 gameplay prefab, 3 Animator Controllers, 3 materials, and 2 scenes (one gameplay scene plus the URP scene template).
 - No authored EditMode or PlayMode test files were found.
 
 ## Current gameplay and controls
@@ -43,6 +43,10 @@ The core loop exists and the project opens in Unity 6. Milestone 0 was frozen an
 - `Enemy_Respawner.cs`: validates its prefab/spawn points, spawns randomly, flips enemies spawned to the player's right, and accelerates spawn cadence.
 - `Entity_AnimationEvents.cs`: forwards attack clip events to movement locking and `DamageTargets()`.
 - `UI.cs`: scene singleton, timer, kill count, Game Over UI, and restart.
+- `StateMachine/EntityState.cs`: abstract plain-C# state contract with `Enter`, `Update`, and `Exit`, bound to an Entity and its state machine.
+- `StateMachine/EntityStateMachine.cs`: initializes one starting state, updates the active state, and performs guarded Exit/Enter transitions.
+- `StateMachine/PlayerState.cs`: typed base for Player states.
+- `StateMachine/PlayerIdleState.cs` and `PlayerMoveState.cs`: own zero/input-driven horizontal velocity and deterministic Idle/Move transitions while preserving movement locks.
 
 Known serialization-sensitive contracts:
 
@@ -110,6 +114,7 @@ Overall Milestone 0 result: **pass with one manual feel check outstanding**. The
 - Unity MCP package pinned to `v10.0.0`, local endpoint configured in Codex, and connection previously validated.
 - 2026-09-17: stale repository instructions replaced, durable project state created, and Codex Memories enabled globally.
 - Milestone 0 baseline checkpoint created on branch `codex/milestone-0-baseline` at commit `176fafe` before any FSM migration.
+- Milestone 1 steps 1 and 3a completed on branch `codex/milestone-1-fsm-foundation`: added compiled FSM primitives and migrated Player Idle/Move while leaving Jump and Attack on their prior path.
 
 ## Open questions and known risks
 
@@ -125,7 +130,7 @@ Priority order is provisional and must be confirmed with the user before gamepla
 The full proposed completion sequence, effort estimates and milestone exit criteria are maintained in `ROADMAP.md`. The current recommended target is a combat vertical slice first, then an RPG vertical slice, then release hardening.
 
 1. Manually confirm sustained `A`/`D` movement and Space jump in a focused Game view, closing the only partial item from the 2026-09-17 Milestone 0 smoke test.
-2. Begin Milestone 1 with a reviewed Entity/Player FSM migration plan and preserve the baseline controls and animation-event contracts.
+2. Continue Milestone 1 with Player Jump/Fall states while preserving legacy Space input, jump force `12`, grounded detection, Animator parameters, and Attack behavior.
 3. Decide and implement enemy attack cadence/state behavior if repeated trigger requests cause incorrect combat.
 4. Add focused EditMode/PlayMode tests for logic that can be tested reliably.
 5. Produce and smoke-test a standalone build.
@@ -140,3 +145,5 @@ The full proposed completion sequence, effort estimates and milestone exit crite
 - 2026-09-17 — Ran and documented the Milestone 0 Play Mode smoke test through Unity MCP. Startup/HUD, bilateral spawning, mouse attack plus Animation Event damage, enemy death and kill counting, both Game Over branches, Restart, Console cleanliness, and Editor cleanup passed. Movement/jump handlers produced the configured velocities, but sustained physical keyboard input remains a manual confirmation. No persistent Unity asset or gameplay file was changed by the test.
 - 2026-09-17 — Finalized Milestone 0 decisions: Game Over now pauses at `Time.timeScale=0`; the spawn cooldown default/comment and the already-serialized Inspector value are aligned at `0.7` seconds. Retest confirmed startup/HUD, handler velocities, 6/6 bilateral runtime spawns, combat damage and kill count, both Game Over branches, Restart at zero time scale, and a clean Console. No scene/prefab/animation/material asset required modification.
 - 2026-09-17 — Created the pre-FSM Git checkpoint `176fafe` on branch `codex/milestone-0-baseline` (`Checkpoint Milestone 0 baseline`).
+- 2026-09-17 — Started Milestone 1 on branch `codex/milestone-1-fsm-foundation`. Added abstract `EntityState` and sealed `EntityStateMachine` primitives with null guards, one-time initialization, active-state update, and guarded transitions. Unity compiled both into `Assembly-CSharp`; API reflection and validation reported the expected members with zero diagnostics. A Play Mode startup regression found all core scene objects active at `timeScale=1` and the Console remained clean. No Player/Enemy behavior or serialized asset was changed.
+- 2026-09-17 — Migrated Player Idle/Move to `PlayerIdleState` and `PlayerMoveState` without changing serialized data, legacy input, speed, jump, attack, Animator parameters, or Animation Events. Play Mode transition checks produced `Idle → Move → Idle`, horizontal velocities `+8/0/-8`, jump velocity `12`, and movement-lock velocities `8 → 0 → 8`; Console remained clean. Jump/Fall and Attack are intentionally not state-driven yet.
