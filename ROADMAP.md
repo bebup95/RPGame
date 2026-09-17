@@ -1,6 +1,6 @@
 # RPGame completion roadmap
 
-Status: Milestones 0–3 complete; Milestone 4 next
+Status: Milestones 0–4 complete; Milestone 5 next
 Prepared: 2026-09-17  
 Effort unit: one focused developer-day is approximately 4–6 productive hours. Learning while following the course can multiply estimates by 1.5–2.5.
 
@@ -14,12 +14,12 @@ The project has progressed from its crash-course prototype into a combat vertica
 
 | Area | Current state | Gap to RPG target |
 |---|---|---|
-| Player | FSM-driven Idle, Move, Jump, Fall, grounded Attack, damage/invulnerability and knockback receiving | No wall states, dash, combo, aerial attack, counter, hurt animation, or input abstraction |
+| Player | FSM-driven locomotion/Attack, damage reactions, runtime stats/progression, and Power Strike skill | No wall states, dash, combo, aerial attack, counter, hurt animation, or input abstraction |
 | Enemy | Idle/Patrol/Chase/Attack/Hurt/Stunned/Retreat/Death FSM, explicit cooldown, two profile-driven variants | No counter behavior, boss, unique variant animations, or larger enemy roster |
-| Combat | Animation-event hit timing, physical/elemental damage context, one-hit-per-swing, invulnerability, knockback, health bars, flash and death | No stat formulas, critical/armor/resistance calculation, named status effects, combo, aerial attack, counter, or dash |
+| Combat | Animation-event hit timing, damage context, one-hit-per-swing, critical/armor/resistance formulas, regeneration, knockback, health bars, and three status-effect runtimes | No combo, aerial attack, counter, dash, or authored status-effect content/VFX |
 | Level | Bounded forest traversal slice with follow camera, parallax, modular terrain, platforms, hazards, checkpoint and endpoint | No authored terrain tileset/Tilemap workflow, scene transition, or additional level |
-| UI | Timer, kill count, world health bars, Game Over, Restart | No pause/settings, resource HUD, inventory, equipment, skill tree, tooltips, or save slots |
-| Progression | None | No stats, XP/level, currency, skills, unlocks, equipment progression |
+| UI | Timer, kill count, world health bars, progression HUD, cooldown label, keyboard skill tree/tooltips, Game Over, Restart | No pause/settings, inventory, equipment, pointer/controller skill navigation, or save slots |
+| Progression | Stats, XP/levels, skill points, currency, three-node branch, Power Strike and mutually exclusive upgrades | No item/equipment modifiers, broader skill tree, persistent unlocks, or content balance pass |
 | Content | One player, two data-configured enemy prefabs/profiles, protected character | No loot, interactables, chests, items, recipes, merchants, storage or bosses |
 | Persistence | None | No save/load, checkpoint, inventory/skill/stat persistence |
 | Quality | MCP connection and Inspector contracts verified | No authored tests, complete smoke-test record, standalone build verification, profiler pass |
@@ -182,6 +182,18 @@ Recommended implementation:
 Exit criteria: player earns a level/skill point, unlocks one skill, uses it in combat, and all displayed values match the underlying formulas.  
 Estimate: 10–16 days. Difficulty: high.
 
+Completion record (2026-09-18):
+
+- Fixed the authoritative formulas, initial profiles, rewards, controls, branch rules, and acceptance criteria in `Docs/STAT_PROGRESSION_DESIGN.md`.
+- Added four immutable CharacterStatProfile assets and per-actor CharacterStats. Physical power, half-up rounding, critical chance/power, armor mitigation, elemental resistance, and health regeneration are active in the existing damage path.
+- Added Chilled (0.65 movement), Burned (direct one-second ticks), and Electrified (1.25 incoming damage) runtime support without adding unrequested elemental effects to the current attacks.
+- Forest/Swift rewards are 6 XP/2 currency and 8 XP/3 currency. Requirements follow `10 + 5 × (level - 1)` and each level grants one skill point.
+- Added Power Strike (2×, 4 seconds), Crushing Force (2.5×), and Quick Recovery (2.5-second cooldown) SkillDefinition assets. Prerequisites and the two branch conflicts are enforced by stable IDs.
+- Added HUD level/XP/currency/SP text, an always-visible cooldown label, and a `K`-toggle skill tree with tooltips and `1/2/3` unlock controls. `Q` activates Power Strike through the existing grounded Attack state and Animation Event impact.
+- Runtime verification matched the design: 2.5× base 1 produced 3, armor 100 reduced raw 100 to 99, 10% fire resistance reduced 100 to 90, Chilled reported 0.65, Electrified changed raw 4 to 5, Burned ticked 1, and regeneration restored the missing HP.
+- Two Forest rewards produced level 2, 2/15 XP, 1 SP, and 4 currency. Power Strike then killed a 2-HP Enemy in one impact, awarded the next reward, showed a 4.0-second cooldown, and rejected reuse. Both upgrade branches correctly rejected their conflicting node, and Quick Recovery reported 2.5 seconds.
+- A fresh natural-spawn smoke test retained Player max HP 10, initialized both Enemy stat components, displayed the expected locked HUD state, and left the Console clean.
+
 ## Milestone 5 — Items, loot, inventory and economy
 
 Goal: complete a small but coherent obtain–use–equip–upgrade loop.
@@ -262,4 +274,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Start Milestone 4 by defining the exact stat, damage, XP, level, currency, and first-skill formulas in a design note. Then implement immutable stat/skill ScriptableObjects and runtime stat instances before wiring the first complete progression branch.
+Start Milestone 5 with stable item IDs and immutable definitions, then implement and verify the inventory model before building loot, equipment, crafting, merchant, storage, and their UI.

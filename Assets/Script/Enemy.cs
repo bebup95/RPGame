@@ -40,7 +40,15 @@ public class Enemy : Entity
     internal float HurtRecoveryDuration => hurtRecoveryDuration;
     internal float PendingStunDuration { get; private set; }
 
-    private float EffectiveMoveSpeed => profile != null ? profile.MoveSpeed : moveSpeed;
+    private float EffectiveMoveSpeed
+    {
+        get
+        {
+            float statusMultiplier = statusEffects != null ? statusEffects.MovementMultiplier : 1f;
+            float configuredSpeed = profile != null ? profile.MoveSpeed : moveSpeed;
+            return configuredSpeed * statusMultiplier;
+        }
+    }
     private float EffectiveDetectionRadius => profile != null ? profile.DetectionRadius : targetDetectionRadius;
     private float EffectiveDisengageRadius => profile != null ? profile.DisengageRadius : disengageRadius;
     private float EffectiveAttackCooldown => profile != null ? profile.AttackCooldown : attackCooldown;
@@ -267,6 +275,12 @@ public class Enemy : Entity
         if (ui != null)
         {
             ui.AddKillCount();
+        }
+
+        PlayerProgression progression = FindFirstObjectByType<PlayerProgression>();
+        if (progression != null && profile != null)
+        {
+            progression.AddRewards(profile.ExperienceReward, profile.CurrencyReward);
         }
     }
 

@@ -170,6 +170,8 @@ GameObject:
   - component: {fileID: 3110243465044916043}
   - component: {fileID: 5801182849873349243}
   - component: {fileID: 497935438947908381}
+  - component: {fileID: 2532098075182043451}
+  - component: {fileID: 7706031968798050757}
   m_Layer: 7
   m_Name: EnemySwift
   m_TagString: Untagged
@@ -216,6 +218,7 @@ MonoBehaviour:
   moveSpeed: 2
   targetDetectionRadius: 7
   disengageRadius: 10
+  targetScanInterval: 0.2
   attackCooldown: 1.25
   idleDuration: 0.35
   retreatDuration: 0.5
@@ -345,6 +348,36 @@ MonoBehaviour:
     m_Bits: 256
   attackData:
     physicalDamage: 1
+    elementalDamage: 0
+    element: 0
     horizontalKnockback: 4
     verticalKnockback: 3
     stunDuration: 0
+    statusEffect: 0
+    statusDuration: 0
+    statusPotency: 0
+--- !u!114 &2532098075182043451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2684336916123566027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce68d2f08f9c64e8e973fb289e92fe93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  profile: {fileID: 11400000, guid: 27a180eb89d8d4fa8bf0413096ea2112, type: 2}
+--- !u!114 &7706031968798050757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2684336916123566027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 260806d52137e4cafbaa4dbd9d0f0217, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

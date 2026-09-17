@@ -63,7 +63,8 @@ public class Player : Entity
 
     protected override void HandleMovement()
     {
-        float horizontalVelocity = canMove ? xInput * moveSpeed : 0f;
+        float movementMultiplier = statusEffects != null ? statusEffects.MovementMultiplier : 1f;
+        float horizontalVelocity = canMove ? xInput * moveSpeed * movementMultiplier : 0f;
         SetHorizontalVelocity(horizontalVelocity);
     }
 
@@ -95,6 +96,18 @@ public class Player : Entity
     {
         if (isGrounded && canMove)
             stateMachine.ChangeState(AttackState);
+    }
+
+    public bool TryStartSkillAttack(float damageMultiplier)
+    {
+        if (!isGrounded || !canMove || combat == null || ReferenceEquals(stateMachine.CurrentState, AttackState))
+        {
+            return false;
+        }
+
+        combat.SetNextSwingDamageMultiplier(damageMultiplier);
+        stateMachine.ChangeState(AttackState);
+        return true;
     }
 
     public override void EnableMovement(bool value)
