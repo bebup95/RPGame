@@ -8,7 +8,7 @@ This is the durable project handoff. It records verified facts, decisions, compl
 
 RPGame is a small single-scene 2D action game. The player moves and jumps in a fixed side-view arena, protects a stationary character, and defeats enemies that spawn from both sides with an accelerating cadence. The run shows elapsed time and kill count and reaches Game Over when the player or protected character dies.
 
-The core loop exists and the project opens in Unity 6. Milestone 0 was frozen and smoke-tested on 2026-09-17. All runtime branches passed, and the user subsequently confirmed the focused locomotion checks. The two baseline design decisions are now fixed: Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. Milestone 1 now has compiled state-machine primitives plus Player Idle, Move, Jump, Fall, and Attack states. This project is still in development: reusable gameplay components and advanced locomotion remain pending, automated tests are absent, and a standalone build verification has not yet been recorded.
+The core loop exists and the project opens in Unity 6. Milestone 0 was frozen and smoke-tested on 2026-09-17. All runtime branches passed, and the user subsequently confirmed the focused locomotion checks. The two baseline design decisions are now fixed: Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. Milestone 1 is complete with compiled state-machine primitives plus Player Idle, Move, Jump, Fall, and Attack states. Work that depends on new level geometry, animation clips, combat data, or input bindings was deliberately moved to the milestone that supplies those prerequisites. This project is still in development: automated tests are absent and a standalone build verification has not yet been recorded.
 
 ## Verified environment
 
@@ -118,7 +118,7 @@ Overall Milestone 0 result: **pass with one manual feel check outstanding**. The
 - Unity MCP package pinned to `v10.0.0`, local endpoint configured in Codex, and connection previously validated.
 - 2026-09-17: stale repository instructions replaced, durable project state created, and Codex Memories enabled globally.
 - Milestone 0 baseline checkpoint created on branch `codex/milestone-0-baseline` at commit `176fafe` before any FSM migration.
-- Milestone 1 steps 1 and 3 completed on branch `codex/milestone-1-fsm-foundation`: added compiled FSM primitives and migrated Player Idle/Move/Jump/Fall/Attack while preserving the existing animation-driven hit path.
+- Milestone 1 completed on branch `codex/milestone-1-fsm-foundation`: added compiled FSM primitives and migrated Player Idle/Move/Jump/Fall/Attack while preserving the existing animation-driven hit path.
 
 ## Open questions and known risks
 
@@ -133,12 +133,13 @@ Priority order is provisional and must be confirmed with the user before gamepla
 
 The full proposed completion sequence, effort estimates and milestone exit criteria are maintained in `ROADMAP.md`. The current recommended target is a combat vertical slice first, then an RPG vertical slice, then release hardening.
 
-1. Continue Milestone 1 by separating reusable health, combat target detection, status/knockback receiving, and animation-event relay responsibilities without breaking existing serialized references.
-2. Audit available level geometry, animations, and intended bindings before implementing WallSlide/WallJump, Dash, combo queue, or aerial attack; do not invent missing art or controls as incidental changes.
-3. Decide and implement enemy attack cadence/state behavior if repeated trigger requests cause incorrect combat.
-4. Add focused EditMode/PlayMode tests for logic that can be tested reliably.
-5. Produce and smoke-test a standalone build.
-6. Only after gameplay requirements are agreed: add or refine assets, animations, materials, VFX, audio, levels, UI polish, and balancing while preserving the established art direction.
+1. Start Milestone 2 by inventorying reusable tiles/backgrounds and building a small traversal level with stable collision and a dependency-free camera follow/bounds implementation.
+2. Add WallSlide/WallJump only after the level provides deliberate wall geometry and suitable visual feedback.
+3. Separate reusable health, combat target detection, status/knockback receiving, and animation-event relay responsibilities as part of the Milestone 3 combat data migration, so serialized combat data is moved once rather than twice.
+4. Add Dash, combo queue, and aerial attack only after their clips, cooldown rules, and legacy-input bindings are explicitly defined in the combat slice.
+5. Decide and implement enemy attack cadence/state behavior if repeated trigger requests cause incorrect combat.
+6. Add focused EditMode/PlayMode tests for logic that can be tested reliably.
+7. Produce and smoke-test a standalone build.
 
 ## Change log
 
@@ -154,3 +155,4 @@ The full proposed completion sequence, effort estimates and milestone exit crite
 - 2026-09-17 — Migrated Player Jump/Fall to `PlayerJumpState` and `PlayerFallState` while keeping Space input, jump force `12`, horizontal air control, ground raycast, Animator parameters, and legacy Attack behavior. Runtime checks produced `Idle → Jump(12) → Fall(-3) → Idle/Move`, air-control velocities `+8/-8`, correct `Yvelocity`/`isGrounded` Animator values, and movement/jump lock behavior `0 → 8` after unlock. Console remained clean and no serialized asset changed. A focused physical keyboard feel check remains required before Attack migration.
 - 2026-09-17 — After the user confirmed the focused locomotion checks, migrated Player Attack to `PlayerAttackState` without changing the `attack` Animator trigger or the `DisableMovementAndJump` → `DamageTargets` → `EnableMovementAndJump` event sequence. Runtime state checks passed Attack entry, movement lock, and exits to Idle/Move/Fall; a hit-path check reduced a target to zero health, incremented kills to `1`, and returned to Idle. Script validation reported zero diagnostics, the Console was clean, Play Mode exited, and no scene/prefab/animation/material asset changed.
 - 2026-09-17 — Recorded standing authorization to continue roadmap milestones without routine confirmation and the milestone commit policy. Existing pushed Milestone 1 commits will not be rewritten; the one-completion-commit convention applies cleanly from Milestone 2 onward.
+- 2026-09-17 — Closed Milestone 1 as the verified base Player FSM. Asset inspection found only Idle/Move/Jump/Fall/Attack player clips and no wall, dash, combo, aerial, hurt, stun, or knockback content. Wall traversal was moved behind Milestone 2 level geometry; combat component separation and advanced attacks were moved into Milestone 3, where their data, clips, cooldown rules, and bindings can be designed together. The legacy input path remains the fixed strategy for the current vertical slice.
