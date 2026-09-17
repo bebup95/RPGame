@@ -18,6 +18,7 @@ public class Player : Entity
     internal PlayerMoveState MoveState { get; private set; }
     internal PlayerJumpState JumpState { get; private set; }
     internal PlayerFallState FallState { get; private set; }
+    internal PlayerAttackState AttackState { get; private set; }
 
     protected override void Awake()
     {
@@ -28,6 +29,7 @@ public class Player : Entity
         MoveState = new PlayerMoveState(this, stateMachine);
         JumpState = new PlayerJumpState(this, stateMachine);
         FallState = new PlayerFallState(this, stateMachine);
+        AttackState = new PlayerAttackState(this, stateMachine);
         stateMachine.Initialize(IdleState);
     }
 
@@ -48,7 +50,7 @@ public class Player : Entity
             TryToJump();
 
         if (Input.GetKeyDown(KeyCode.Mouse0))
-            HandleAttack();
+            TryToAttack();
     }
 
     protected override void HandleMovement()
@@ -69,16 +71,41 @@ public class Player : Entity
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, verticalVelocity);
     }
 
+    internal void TriggerAttackAnimation() => base.HandleAttack();
+
     private void TryToJump()
     {
         if (isGrounded && canJump)
             stateMachine.ChangeState(JumpState);
     }
 
+    private void TryToAttack()
+    {
+        if (isGrounded && canMove)
+            stateMachine.ChangeState(AttackState);
+    }
+
     public override void EnableMovement(bool value)
     {
         base.EnableMovement(value);
         canJump = value;
+
+        if (value && ReferenceEquals(stateMachine.CurrentState, AttackState))
+        {
+            ExitAttackState();
+        }
+    }
+
+    private void ExitAttackState()
+    {
+        if (!isGrounded)
+        {
+            stateMachine.ChangeState(FallState);
+            return;
+        }
+
+        EntityState groundedState = xInput == 0f ? IdleState : MoveState;
+        stateMachine.ChangeState(groundedState);
     }
 
     protected override void Die()

@@ -11,6 +11,7 @@ This file contains durable instructions for every Codex task in this repository.
 
 ## Scope and approval boundaries
 
+- The user has approved continuing through `ROADMAP.md` milestones without asking for routine confirmation at every milestone. Continue autonomously while preserving all fixed constraints; still stop for destructive actions, new dependencies, or an unresolved choice that would materially change art direction, input strategy, architecture, or game rules.
 - Keep changes within the user's stated request. Do not independently change the art style, input system, overall architecture, game rules, or difficulty model.
 - Do not delete assets, install or update dependencies, migrate systems, or make broad structural changes without asking first.
 - Do not edit Unity scene or prefab YAML directly when the operation can be performed through the Unity Editor.
@@ -56,3 +57,4 @@ This file contains durable instructions for every Codex task in this repository.
 - There are currently no authored EditMode or PlayMode tests. Add tests only when they are in scope and place them in a dedicated test assembly.
 - Update `PROJECT_STATE.md` after every completed task or milestone. Record what changed, what was verified, remaining risks, and backlog changes.
 - Before handoff, report checks performed and any verification that could not be completed.
+- Keep milestone history easy to review: target one clearly named completion commit per milestone. Do not rewrite commits that are already pushed; Milestone 1 predates this rule, so finish it with a clearly named milestone-completion commit, then apply the one-commit rule from Milestone 2 onward.

@@ -1,6 +1,6 @@
 # RPGame completion roadmap
 
-Status: Milestone 0 frozen; Milestone 1 ready for reviewed implementation  
+Status: Milestone 0 frozen; Milestone 1 in progress
 Prepared: 2026-09-17  
 Effort unit: one focused developer-day is approximately 4–6 productive hours. Learning while following the course can multiply estimates by 1.5–2.5.
 
@@ -92,8 +92,9 @@ Progress record (2026-09-17):
 - Step 1 complete on `codex/milestone-1-fsm-foundation`: added `EntityState` and `EntityStateMachine` as plain C# primitives.
 - The primitives compile into `Assembly-CSharp` and expose the planned Enter/Update/Exit and Initialize/ChangeState/UpdateActiveState APIs.
 - Player Idle, Move, Jump, and Fall now use dedicated states. Runtime checks preserved `+8/0/-8` horizontal velocities, jump force `12`, air control, apex/landing transitions, Animator velocity/ground values, and Animation Event movement locks.
-- Attack and its Animation Events are unchanged.
-- Automated/runtime locomotion checks pass; a focused physical keyboard feel check is still required before Attack migration.
+- The user confirmed the focused locomotion checks. Player Attack now uses `PlayerAttackState` while preserving the existing `attack` trigger and `DisableMovementAndJump` → `DamageTargets` → `EnableMovementAndJump` event sequence.
+- Runtime Attack checks passed entry, movement lock, exits to Idle/Move/Fall, target death, and kill-count increment. Script validation and the Unity Console are clean; no serialized asset changed.
+- Remaining Milestone 1 scope: reusable component separation, supporting-content audit for wall traversal and advanced attacks, cooldown/state gates, and a deliberate input-strategy decision.
 
 ## Milestone 2 — Level, camera and traversal slice
 
@@ -237,4 +238,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Run the focused Game-view locomotion feel check: sustained left/right movement, jump from Idle and Move, both air-control directions, apex-to-fall transition, landing to Idle/Move, walking off an edge, and movement lock/unlock. If those checks match the Milestone 0 feel, migrate Player Attack as the next isolated state while preserving its trigger and Animation Events.
+Continue Milestone 1 with a serialization-safe component-boundary audit, beginning with health, target detection, status/knockback receiving, and the Animation Event relay. Before adding WallSlide/WallJump, Dash, combos, or aerial attacks, inventory the available geometry, clips, Animator parameters, and intended legacy-input bindings so missing content or controls are not invented silently.
