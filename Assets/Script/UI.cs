@@ -52,7 +52,7 @@ public class UI : MonoBehaviour
 
     public void EnableGameOverUI()
     {
-        Time.timeScale = 0.5f;
+        Time.timeScale = 0f;
         gameOverUI.SetActive(true);
     }
 
