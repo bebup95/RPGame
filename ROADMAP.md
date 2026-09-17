@@ -1,6 +1,6 @@
 # RPGame completion roadmap
 
-Status: Milestones 0–2 complete; Milestone 3 next
+Status: Milestones 0–3 complete; Milestone 4 next
 Prepared: 2026-09-17  
 Effort unit: one focused developer-day is approximately 4–6 productive hours. Learning while following the course can multiply estimates by 1.5–2.5.
 
@@ -8,19 +8,19 @@ Effort unit: one focused developer-day is approximately 4–6 productive hours. 
 
 Build a polished, playable 2D action-RPG vertical slice that follows the system progression of AlexDev's Unity 6 RPG course without blindly copying every lecture. The first complete slice should contain one finished level, a responsive player state machine, one full enemy, meaningful stats and combat, one skill branch, a small item/equipment loop, persistence, menus, audio, and a distributable build.
 
-The current project is best treated as a completed crash-course prototype. It already implements the protect-the-girl survival loop shown in AlexDev's free beginner project, but it does not yet contain the scalable architecture or RPG systems from the main course.
+The project has progressed from its crash-course prototype into a combat vertical slice with state-driven actors, a traversable level, and reusable combat components. It still lacks the RPG progression, item, persistence, menu, audio, and release systems from the larger course target.
 
 ## Current capability map
 
 | Area | Current state | Gap to RPG target |
 |---|---|---|
-| Player | FSM-driven Idle, Move, Jump, Fall, and one grounded Attack | No wall states, dash, combo, aerial attack, counter, knockback, input abstraction |
-| Enemy | Walks in facing direction, overlap detection, one attack, death | No idle/patrol/chase/battle/retreat/stun FSM or multiple enemy types |
-| Combat | Animation-event hit timing, one damage per hit, flash, death | No damage data, variable damage, invulnerability, knockback, health bars, critical/armor/element/status systems |
-| Level | One fixed arena and background | No authored Tilemap level, camera follow/confiner, parallax system, hazards, checkpoints, scene flow |
-| UI | Timer, kill count, Game Over, Restart | No HUD health/resources, pause/settings, inventory, equipment, skill tree, tooltips, save slots |
+| Player | FSM-driven Idle, Move, Jump, Fall, grounded Attack, damage/invulnerability and knockback receiving | No wall states, dash, combo, aerial attack, counter, hurt animation, or input abstraction |
+| Enemy | Idle/Patrol/Chase/Attack/Hurt/Stunned/Retreat/Death FSM, explicit cooldown, two profile-driven variants | No counter behavior, boss, unique variant animations, or larger enemy roster |
+| Combat | Animation-event hit timing, physical/elemental damage context, one-hit-per-swing, invulnerability, knockback, health bars, flash and death | No stat formulas, critical/armor/resistance calculation, named status effects, combo, aerial attack, counter, or dash |
+| Level | Bounded forest traversal slice with follow camera, parallax, modular terrain, platforms, hazards, checkpoint and endpoint | No authored terrain tileset/Tilemap workflow, scene transition, or additional level |
+| UI | Timer, kill count, world health bars, Game Over, Restart | No pause/settings, resource HUD, inventory, equipment, skill tree, tooltips, or save slots |
 | Progression | None | No stats, XP/level, currency, skills, unlocks, equipment progression |
-| Content | One player, one enemy prefab, protected character | No loot, interactables, chests, items, recipes, merchants, storage or bosses |
+| Content | One player, two data-configured enemy prefabs/profiles, protected character | No loot, interactables, chests, items, recipes, merchants, storage or bosses |
 | Persistence | None | No save/load, checkpoint, inventory/skill/stat persistence |
 | Quality | MCP connection and Inspector contracts verified | No authored tests, complete smoke-test record, standalone build verification, profiler pass |
 
@@ -150,6 +150,16 @@ Recommended implementation:
 Exit criteria: enemy behavior is readable; one attack produces one expected hit; player and enemy death flows are reliable; combat survives repeated five-minute sessions without Console errors.  
 Estimate: 8–13 days. Difficulty: high.
 
+Completion record (2026-09-18):
+
+- Added explicit Enemy Idle, Patrol, Chase, Attack, Hurt, Stunned, Retreat, and Death states. The `Attack` trigger is issued once on state entry and the original Animation Events still own movement lock, impact, and completion timing.
+- Split combat into `EntityHealth`, `EntityCombat`, `KnockbackReceiver`, `AttackData`/`DamageContext`, `IDamageable`, and runtime world health bars. Player/ObjectToProtect/Enemy Inspector data was migrated through Unity MCP without hand-editing scene or prefab YAML.
+- One target is accepted only once per swing. Isolated tests produced Player HP `10→9→9` for duplicate events and `→8` for the next swing; Enemy death still increments the kill counter.
+- Added `ForestEnemy` and `SwiftForestEnemy` ScriptableObject profiles plus `EnemySwift.prefab`; the existing respawner now selects either validated prefab without duplicating behavior code.
+- A natural 25-second smoke run spawned both profiles, exercised cooldown-paced attacks and reached the existing Game Over flow with a clean Console. Controlled accelerated sessions then exercised the base profile for 410 simulated seconds/262 hits and the Swift profile for 373 simulated seconds/237 hits, both with zero Console errors or warnings.
+- Collider-accurate attack range uses `Collider2D.ClosestPoint`; this fixed an endurance-test edge case where an Enemy could stop a few hundredths of a unit before its overlap actually reached the target.
+- Counter, Dash, combo, aerial attack, and bespoke hurt/death animations remain deliberately deferred because the required clips and explicit bindings/rules do not yet exist.
+
 ## Milestone 4 — Stats, progression and first skill
 
 Goal: create the minimum RPG progression loop before building lots of content.
@@ -252,4 +262,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Start Milestone 3 by introducing the Enemy FSM and an explicit attack state/cooldown while preserving the existing `Attack` Animator trigger and Animation Events. Then migrate damage into a one-hit-per-swing context before adding hurt, knockback, stun, and health-bar feedback.
+Start Milestone 4 by defining the exact stat, damage, XP, level, currency, and first-skill formulas in a design note. Then implement immutable stat/skill ScriptableObjects and runtime stat instances before wiring the first complete progression branch.

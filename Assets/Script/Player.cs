@@ -36,6 +36,14 @@ public class Player : Entity
     protected override void Update()
     {
         HandleCollision();
+
+        if (IsKnockbackActive)
+        {
+            HandleAnimations();
+            HandleFlip();
+            return;
+        }
+
         HandleInputs();
         stateMachine.UpdateActiveState();
         HandleAnimations();
@@ -71,7 +79,11 @@ public class Player : Entity
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, verticalVelocity);
     }
 
-    internal void TriggerAttackAnimation() => base.HandleAttack();
+    internal void TriggerAttackAnimation()
+    {
+        BeginAttackSwing();
+        base.HandleAttack();
+    }
 
     private void TryToJump()
     {

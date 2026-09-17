@@ -8,18 +8,18 @@ This is the durable project handoff. It records verified facts, decisions, compl
 
 RPGame is a small single-scene 2D action game. The player moves and jumps in a fixed side-view arena, protects a stationary character, and defeats enemies that spawn from both sides with an accelerating cadence. The run shows elapsed time and kill count and reaches Game Over when the player or protected character dies.
 
-The core loop exists and the project opens in Unity 6. Milestone 0 was frozen and smoke-tested on 2026-09-17. All runtime branches passed, and the user subsequently confirmed the focused locomotion checks. The two baseline design decisions are now fixed: Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. Milestone 1 is complete with compiled state-machine primitives plus Player Idle, Move, Jump, Fall, and Attack states. Milestone 2 is complete on `codex/milestone-2-level-traversal`: the original arena now extends into a bounded traversal slice with repeated forest backgrounds, parallax, generated terrain, raised platforms, checkpoint respawning, ground/fall hazards, and a clear endpoint. This project is still in development: automated tests are absent and a standalone build verification has not yet been recorded.
+The core loop exists and the project opens in Unity 6. Milestones 0–3 are complete. The baseline is smoke-tested, Player locomotion/attack is state-driven, the arena is now a bounded traversal slice, and combat uses reusable health/combat/knockback components plus an explicit Enemy FSM. Two data-configured enemy profiles spawn through the existing respawner. Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. This project is still in development: the RPG progression, items, persistence, authored automated tests, and standalone build verification remain unfinished.
 
 ## Verified environment
 
 - Repository: `/Users/lenhat/Developer/RPGame-main`
-- Git: Milestone 1 work started from merged `origin/main` commit `4a88cd2` on branch `codex/milestone-1-fsm-foundation`.
+- Git: active milestone branch `codex/milestone-3-production-combat`, based on Milestone 2 commit `dc1d4c6`.
 - Unity: `6000.0.72f1` (`b731fd3ae857`).
 - Entry scene: `Assets/Scenes/SampleScene.unity`; it is the only enabled build scene.
 - Packages include URP `17.0.4`, Input System `1.19.0`, uGUI `2.0.0`, Test Framework `1.6.0`, and Unity MCP `v10.0.0` from CoplayDev.
 - Codex Unity MCP endpoint: `http://127.0.0.1:8080/mcp`.
 - Unity MCP is connected and responding through HTTP. On 2026-09-17 it reported one active instance, `RPGame-main@5489ec430c09e367`, with the correct project root and Unity version. Five consecutive read cycles completed successfully without stale state or routing failures (about 1.5–1.8 seconds per cycle).
-- Authored asset inventory at this audit: 21 C# runtime scripts, 1 gameplay prefab, 3 Animator Controllers, 3 materials, 1 generated terrain texture, and 2 scenes (one gameplay scene plus the URP scene template).
+- Authored asset inventory at this audit: 38 C# runtime scripts, 2 gameplay prefabs, 2 EnemyProfile assets, 3 Animator Controllers, 3 materials, 1 generated terrain texture, and 2 scenes (one gameplay scene plus the URP scene template).
 - No authored EditMode or PlayMode test files were found.
 
 ## Current gameplay and controls
@@ -27,8 +27,9 @@ The core loop exists and the project opens in Unity 6. Milestone 0 was frozen an
 - Horizontal movement: legacy `Horizontal` axis (`A`/`D` or arrow keys).
 - Jump: Space while grounded and movement is enabled.
 - Player attack: left mouse button while grounded and movement is enabled; `PlayerAttackState` invokes the existing base attack path and Animator trigger `attack`.
-- Enemy attack: an overlap check sets Animator trigger `Attack` while a target is detected.
-- Attacks apply damage on an Animation Event by calling `Entity.DamageTargets()`.
+- Enemy behavior: Idle, Patrol, Chase, Attack, Hurt, Stunned, Retreat, and Death states select the nearest living Player-layer target.
+- Enemy attack: an explicit Attack-state decision checks the target collider, fires Animator trigger `Attack` once, and observes a profile cooldown; it no longer requests the trigger every frame.
+- Attacks apply a `DamageContext` on the existing Animation Event impact frame. A target can be hit only once per swing, and short hit invulnerability protects against overlapping attackers/events.
 - Enemy deaths increment the UI kill counter.
 - Elapsed time uses `Time.timeSinceLevelLoad`, so it resets when the scene reloads.
 - Game Over activates a UI panel and sets `Time.timeScale` to `0`; Restart reloads the active scene and `UI.Awake()` restores time scale to `1`.
@@ -36,11 +37,16 @@ The core loop exists and the project opens in Unity 6. Milestone 0 was frozen an
 
 ## Architecture and serialization contracts
 
-- `Entity.cs`: common health, component caching, movement hooks, grounding, facing, animation parameters, overlap-circle damage, hit material feedback, and death behavior.
+- `Entity.cs`: common component caching, movement hooks, grounding, facing, animation parameters, hit material feedback, combat delegation, and death behavior.
+- `Combat/EntityHealth.cs`: reusable current/max health, hit invulnerability, damage/death events, and `IDamageable` implementation.
+- `Combat/EntityCombat.cs`: serialized AttackPoint/radius/mask/data, swing lifecycle, overlap targeting, and one-hit-per-target enforcement.
+- `Combat/DamageContext.cs` and `AttackData.cs`: dealer, physical/elemental damage, element, knockback, hit position, stun duration, and swing identity.
+- `Combat/KnockbackReceiver.cs`: reusable Rigidbody2D knockback window; `WorldHealthBar.cs` supplies runtime world-space health feedback.
+- `Combat/EnemyProfile.cs`: immutable enemy health/movement/detection/cooldown/tint configuration shared by both enemy prefabs.
 - `Player.cs`: legacy input, FSM ownership, movement helpers, attack request, and player-death Game Over.
-- `Enemy.cs`: forward movement, target detection/attack request, and kill-count update.
+- `Enemy.cs`: owns the Enemy FSM, nearest-target selection, collider-accurate attack decisions, profile configuration, and kill-count update.
 - `ObjectToProtect.cs`: faces the player and triggers Game Over on death.
-- `Enemy_Respawner.cs`: validates its prefab/spawn points, spawns randomly, flips enemies spawned to the player's right, and accelerates spawn cadence.
+- `Enemy_Respawner.cs`: validates both enemy prefabs/spawn points, selects a configured enemy variant, flips right-side spawns, and accelerates spawn cadence.
 - `CameraFollow2D.cs`: smooth dependency-free Player follow with serialized X/Y bounds; current scene bounds are X `0..35.8` and fixed Y `0`.
 - `ParallaxBackground2D.cs`: moves each repeated background group by a small fraction of camera movement while preserving their spacing.
 - `PlayerRespawnController.cs`: owns the current checkpoint position and restores Player position/velocity after a traversal hazard.
@@ -53,6 +59,7 @@ The core loop exists and the project opens in Unity 6. Milestone 0 was frozen an
 - `StateMachine/PlayerIdleState.cs` and `PlayerMoveState.cs`: own zero/input-driven horizontal velocity and deterministic Idle/Move transitions while preserving movement locks.
 - `StateMachine/PlayerJumpState.cs` and `PlayerFallState.cs`: own jump impulse, airborne horizontal control, apex transition, and landing selection back to Idle/Move.
 - `StateMachine/PlayerAttackState.cs`: enters through the existing grounded attack trigger, preserves horizontal movement-lock behavior, and exits through the existing final Animation Event to Idle, Move, or Fall.
+- `StateMachine/Enemy*State.cs`: deterministic Idle/Patrol/Chase/Attack/Hurt/Stunned/Retreat/Death transitions with an Animation Event completion path and attack failsafe.
 
 Known serialization-sensitive contracts:
 
@@ -72,6 +79,14 @@ Deep Unity MCP audit completed on 2026-09-17:
 - Player and Enemy Animator parameter names and casing match code. Both attack clips contain `DisableMovementAndJump`, `DamageTargets`, and `EnableMovementAndJump` events, and all receiver methods exist.
 - UI references resolve to `GameOver_UI`, `Timer_Value`, and `KillCount_Value`. `TryAgain_Button` is interactable and has one RuntimeOnly persistent call to `Canvas.UI.RestartLevel`.
 - EventSystem and InputSystemUIInputModule are enabled; the module uses `DefaultInputActions`.
+
+Milestone 3 Unity MCP audit completed on 2026-09-18:
+
+- Player has `EntityHealth` (10 HP, 0.35-second invulnerability), `EntityCombat` (AttackPoint, radius 1, Enemy mask 128), `KnockbackReceiver`, and `WorldHealthBar`.
+- ObjectToProtect has `EntityHealth` (10 HP, 0.35-second invulnerability), `KnockbackReceiver`, and `WorldHealthBar`; it intentionally has no attack component.
+- `Enemy.prefab` and `EnemySwift.prefab` both contain EntityHealth/EntityCombat/KnockbackReceiver/WorldHealthBar. Their EnemyProfile assets provide 2 HP/2.2 speed and 1 HP/3.2 speed respectively.
+- Enemy_Respawner keeps the original Enemy prefab and now also references `EnemySwift.prefab`; the `3.0/0.05/0.7` cadence settings remain unchanged.
+- Player attack events remain at `0.000/0.333/0.667`; Enemy attack events remain at `0.000/0.583/1.417`. Receiver names still resolve to `Entity_AnimationEvents`.
 
 ## Milestone 0 smoke test — 2026-09-17
 
@@ -124,26 +139,25 @@ Overall Milestone 0 result: **pass with one manual feel check outstanding**. The
 - Milestone 0 baseline checkpoint created on branch `codex/milestone-0-baseline` at commit `176fafe` before any FSM migration.
 - Milestone 1 completed on branch `codex/milestone-1-fsm-foundation`: added compiled FSM primitives and migrated Player Idle/Move/Jump/Fall/Attack while preserving the existing animation-driven hit path.
 - Milestone 2 completed on branch `codex/milestone-2-level-traversal`: added the bounded camera, parallax background extension, generated modular terrain, raised platforms, checkpoint, hazard/fall respawn, and endpoint.
+- Milestone 3 completed on branch `codex/milestone-3-production-combat`: added reusable combat components, Enemy FSM/cooldown, one-hit-per-swing contexts, invulnerability, knockback, world health bars, and two data-configured enemy variants.
 
 ## Open questions and known risks
 
-- Enemy code calls `SetTrigger("Attack")` every frame while a target remains detected. Verify actual Animator behavior and decide whether an explicit cooldown/state gate is needed.
 - `Entity.Awake()` assumes Rigidbody2D, Collider2D, child Animator, and child SpriteRenderer exist. These required components were verified for all current Entity types; future prefabs still need the same validation.
+- Health bars create a minimal runtime SpriteRenderer visual from a generated 1×1 texture. This avoids a new art dependency but should be replaced by authored UI art during Milestone 7 polish if suitable assets become available.
+- Counter, Dash, grounded combo, aerial attack, and unique hurt/death clips remain deferred because the repository still has no matching animation content or finalized bindings/rules.
 - No automated tests currently protect combat, spawning, UI, or restart behavior.
 - A current standalone player build result has not been recorded.
 
 ## Backlog
 
-Priority order is provisional and must be confirmed with the user before gameplay changes:
-
 The full proposed completion sequence, effort estimates and milestone exit criteria are maintained in `ROADMAP.md`. The current recommended target is a combat vertical slice first, then an RPG vertical slice, then release hardening.
 
-1. Start Milestone 3 with the Enemy FSM and replace per-frame attack-trigger requests with an explicit attack state/cooldown.
-2. Separate reusable health, combat target detection, status/knockback receiving, and animation-event relay responsibilities during the combat-data migration, so serialized values move once.
-3. Introduce a one-hit-per-swing damage context before adding hurt/knockback/stun behavior.
-4. Add Dash, combo queue, and aerial attack only after their clips, cooldown rules, and legacy-input bindings are explicitly defined in the combat slice.
-5. Add focused EditMode/PlayMode tests for logic that can be tested reliably.
-6. Produce and smoke-test a standalone build.
+1. Start Milestone 4 by writing the exact stat/damage/XP formulas and immutable ScriptableObject definitions.
+2. Implement physical damage, critical chance/power, armor mitigation, health regeneration, XP, levels, skill points, and currency before elemental expansion.
+3. Build one small skill branch and one usable skill with cooldown UI as the end-to-end progression proof.
+4. Add focused EditMode/PlayMode tests for logic that can be tested reliably.
+5. Produce and smoke-test a standalone build during release hardening.
 
 ## Change log
 
@@ -162,3 +176,4 @@ The full proposed completion sequence, effort estimates and milestone exit crite
 - 2026-09-17 — Closed Milestone 1 as the verified base Player FSM. Asset inspection found only Idle/Move/Jump/Fall/Attack player clips and no wall, dash, combo, aerial, hurt, stun, or knockback content. Wall traversal was moved behind Milestone 2 level geometry; combat component separation and advanced attacks were moved into Milestone 3, where their data, clips, cooldown rules, and bindings can be designed together. The legacy input path remains the fixed strategy for the current vertical slice.
 - 2026-09-17 — Started Milestone 2 on `codex/milestone-2-level-traversal`. The asset audit found 12 reusable layered forest backgrounds but no Tilemap or terrain tileset. Added `CameraFollow2D`, bound it to Player through Unity MCP, and set horizontal bounds `0..35.8`. Generated and imported `ForestGroundTile.png` as a Point-filtered, uncompressed Sprite at 128 PPU, duplicated the existing background layers twice, added three contiguous Ground-layer terrain chunks, and moved the right level limit to world X `45.8`.
 - 2026-09-18 — Completed Milestone 2. Added two raised terrain platforms, group parallax, Player checkpoint state, a visible ground hazard, an invisible fall boundary, and a visible endpoint marker. The project had no source tileset, so this small slice deliberately uses modular SpriteRenderer/BoxCollider2D chunks instead of manufacturing a fragile Tilemap palette; all scene/Inspector edits were made through Unity MCP. Play Mode verified checkpoint activation at `(19,-1.5)`, hazard and fall respawn with zero velocity, endpoint activation/color, camera clamps at X `0/35.8`, parallax displacement, and continuous Ground hits from X `16.7..45.7` including both platforms. All six Milestone 2 scripts validated with zero diagnostics, the Console was clean, and scene validation found no missing scripts or broken references.
+- 2026-09-18 — Completed Milestone 3 on `codex/milestone-3-production-combat`. Migrated Player, ObjectToProtect, and both Enemy prefabs to `EntityHealth`/`EntityCombat`/`KnockbackReceiver` through Unity MCP; preserved layer masks, AttackPoints, trigger casing, and all three Animation Events. Added Enemy Idle/Patrol/Chase/Attack/Hurt/Stunned/Retreat/Death states, explicit attack cooldown, physical/elemental `DamageContext`, per-swing target de-duplication, hit invulnerability, knockback, health bars, two EnemyProfile assets, and a profile-driven Swift enemy prefab. Runtime tests proved duplicate impact events yield `10→9→9` while a new swing yields `8`, Enemy attacks reduced Player HP only at cooldown-paced impact frames, both profiles spawned naturally, and a player kill still reached kill count `1`. A collider-edge defect found during endurance testing was fixed with `Collider2D.ClosestPoint`. Base and Swift profiles then completed controlled 410-second and 373-second combat simulations with 262 and 237 valid hits respectively and zero Console errors/warnings. Editor returned idle with a clean Console.
