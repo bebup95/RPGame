@@ -91,9 +91,9 @@ Progress record (2026-09-17):
 
 - Step 1 complete on `codex/milestone-1-fsm-foundation`: added `EntityState` and `EntityStateMachine` as plain C# primitives.
 - The primitives compile into `Assembly-CSharp` and expose the planned Enter/Update/Exit and Initialize/ChangeState/UpdateActiveState APIs.
-- Player Idle and Move now use `PlayerIdleState` and `PlayerMoveState`; runtime checks preserved `+8/0/-8` horizontal velocities and the Animation Event movement lock.
-- Jump still uses the original grounded Space path and retained velocity `12`; Attack and its Animation Events are unchanged.
-- Next migration slice: Player Jump/Fall only; Attack remains on the current path until locomotion equivalence is verified.
+- Player Idle, Move, Jump, and Fall now use dedicated states. Runtime checks preserved `+8/0/-8` horizontal velocities, jump force `12`, air control, apex/landing transitions, Animator velocity/ground values, and Animation Event movement locks.
+- Attack and its Animation Events are unchanged.
+- Automated/runtime locomotion checks pass; a focused physical keyboard feel check is still required before Attack migration.
 
 ## Milestone 2 — Level, camera and traversal slice
 
@@ -237,4 +237,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Integrate Player Jump/Fall states as the next isolated slice. Preserve Space input, jump force `12`, grounded detection, horizontal air control, flip behavior, Animator parameters, Animation Events, and current combat timing; do not migrate Attack until locomotion equivalence is verified.
+Run the focused Game-view locomotion feel check: sustained left/right movement, jump from Idle and Move, both air-control directions, apex-to-fall transition, landing to Idle/Move, walking off an edge, and movement lock/unlock. If those checks match the Milestone 0 feel, migrate Player Attack as the next isolated state while preserving its trigger and Animation Events.

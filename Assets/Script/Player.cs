@@ -11,8 +11,13 @@ public class Player : Entity
     private EntityStateMachine stateMachine;
 
     internal float HorizontalInput => xInput;
+    internal float JumpForce => jumpForce;
+    internal float VerticalVelocity => rb.linearVelocity.y;
+    internal bool IsGrounded => isGrounded;
     internal PlayerIdleState IdleState { get; private set; }
     internal PlayerMoveState MoveState { get; private set; }
+    internal PlayerJumpState JumpState { get; private set; }
+    internal PlayerFallState FallState { get; private set; }
 
     protected override void Awake()
     {
@@ -21,6 +26,8 @@ public class Player : Entity
         stateMachine = new EntityStateMachine();
         IdleState = new PlayerIdleState(this, stateMachine);
         MoveState = new PlayerMoveState(this, stateMachine);
+        JumpState = new PlayerJumpState(this, stateMachine);
+        FallState = new PlayerFallState(this, stateMachine);
         stateMachine.Initialize(IdleState);
     }
 
@@ -57,11 +64,15 @@ public class Player : Entity
         rb.linearVelocity = new Vector2(horizontalVelocity, rb.linearVelocity.y);
     }
 
+    internal void SetVerticalVelocity(float verticalVelocity)
+    {
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, verticalVelocity);
+    }
+
     private void TryToJump()
     {
-        // Lúc này isGrounded đã được nhận diện nhờ đổi thành protected bên Entity
         if (isGrounded && canJump)
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+            stateMachine.ChangeState(JumpState);
     }
 
     public override void EnableMovement(bool value)
