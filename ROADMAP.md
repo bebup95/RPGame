@@ -87,6 +87,13 @@ Recommended implementation:
 Exit criteria: all locomotion and attack states transition deterministically; controls feel at least as responsive as the baseline; no animation-event or Inspector reference regressions.  
 Estimate: 9–15 days. Difficulty: high. Risk: highest architectural milestone.
 
+Progress record (2026-09-17):
+
+- Step 1 complete on `codex/milestone-1-fsm-foundation`: added `EntityState` and `EntityStateMachine` as plain C# primitives.
+- The primitives compile into `Assembly-CSharp` and expose the planned Enter/Update/Exit and Initialize/ChangeState/UpdateActiveState APIs.
+- They are intentionally not connected to Player or Enemy yet, so the Milestone 0 gameplay baseline remains unchanged.
+- Next migration slice: Player Idle and Move only; Jump/Fall and Attack remain on the current path until locomotion equivalence is verified.
+
 ## Milestone 2 — Level, camera and traversal slice
 
 Goal: provide a real level in which the state machine and combat can be evaluated.
@@ -229,4 +236,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Begin Milestone 1 as a sequence of small reviewed steps: introduce only the state-machine primitives first, compile and test, then migrate Idle/Move before Jump/Fall and Attack. Preserve the legacy input bindings, Animator parameters, Animation Events, and current combat timing until equivalence is demonstrated.
+Integrate Player Idle and Move states as the next isolated slice. Preserve the legacy `Horizontal` input, speed `8`, flip behavior, grounded/jump path, Animator parameters, Animation Events, and current combat timing; do not migrate Jump/Fall or Attack until Idle/Move equivalence is verified.
