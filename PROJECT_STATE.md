@@ -109,6 +109,7 @@ Overall Milestone 0 result: **pass with one manual feel check outstanding**. The
 - Recent null-safety/singleton fixes are present in source: protected character stops tracking a destroyed player, UI handles duplicates and clears its static instance, respawner validates core references, and damage feedback stores its coroutine handle.
 - Unity MCP package pinned to `v10.0.0`, local endpoint configured in Codex, and connection previously validated.
 - 2026-09-17: stale repository instructions replaced, durable project state created, and Codex Memories enabled globally.
+- Milestone 0 baseline checkpoint created on branch `codex/milestone-0-baseline` at commit `176fafe` before any FSM migration.
 
 ## Open questions and known risks
 
@@ -138,3 +139,4 @@ The full proposed completion sequence, effort estimates and milestone exit crite
 - 2026-09-17 — Added `ROADMAP.md`, a proposed system-by-system completion plan grounded in the verified prototype and the public AlexDev Unity 6 RPG curriculum. No gameplay implementation was authorized or changed.
 - 2026-09-17 — Ran and documented the Milestone 0 Play Mode smoke test through Unity MCP. Startup/HUD, bilateral spawning, mouse attack plus Animation Event damage, enemy death and kill counting, both Game Over branches, Restart, Console cleanliness, and Editor cleanup passed. Movement/jump handlers produced the configured velocities, but sustained physical keyboard input remains a manual confirmation. No persistent Unity asset or gameplay file was changed by the test.
 - 2026-09-17 — Finalized Milestone 0 decisions: Game Over now pauses at `Time.timeScale=0`; the spawn cooldown default/comment and the already-serialized Inspector value are aligned at `0.7` seconds. Retest confirmed startup/HUD, handler velocities, 6/6 bilateral runtime spawns, combat damage and kill count, both Game Over branches, Restart at zero time scale, and a clean Console. No scene/prefab/animation/material asset required modification.
+- 2026-09-17 — Created the pre-FSM Git checkpoint `176fafe` on branch `codex/milestone-0-baseline` (`Checkpoint Milestone 0 baseline`).

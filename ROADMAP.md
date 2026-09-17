@@ -64,6 +64,7 @@ Completion record (2026-09-17):
 - Spawn balance decision: clamp enemy cooldown at `0.7` seconds in both code and Inspector.
 - Baseline controls: `A`/`D` or arrows to move, Space to jump, left mouse to attack, Restart button after Game Over.
 - Vertical-slice baseline: clean startup/HUD, bilateral spawning, working combat/kill count, both fail paths, restartable clean run, and no gameplay Console errors or warnings.
+- Pre-FSM checkpoint: branch `codex/milestone-0-baseline`, commit `176fafe`.
 
 ## Milestone 1 — Scalable foundation and player FSM
 
@@ -228,4 +229,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Create the Milestone 0 Git checkpoint, then begin Milestone 1 as a sequence of small reviewed steps: introduce only the state-machine primitives first, compile and test, then migrate Idle/Move before Jump/Fall and Attack. Preserve the legacy input bindings, Animator parameters, Animation Events, and current combat timing until equivalence is demonstrated.
+Begin Milestone 1 as a sequence of small reviewed steps: introduce only the state-machine primitives first, compile and test, then migrate Idle/Move before Jump/Fall and Attack. Preserve the legacy input bindings, Animator parameters, Animation Events, and current combat timing until equivalence is demonstrated.
