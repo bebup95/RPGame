@@ -1,6 +1,6 @@
 # RPGame completion roadmap
 
-Status: Milestones 0–1 complete; Milestone 2 next
+Status: Milestones 0–2 complete; Milestone 3 next
 Prepared: 2026-09-17  
 Effort unit: one focused developer-day is approximately 4–6 productive hours. Learning while following the course can multiply estimates by 1.5–2.5.
 
@@ -87,7 +87,7 @@ Recommended implementation:
 Exit criteria: all locomotion and attack states transition deterministically; controls feel at least as responsive as the baseline; no animation-event or Inspector reference regressions.  
 Estimate: 9–15 days. Difficulty: high. Risk: highest architectural milestone.
 
-Progress record (2026-09-17):
+Completion record (2026-09-18):
 
 - Step 1 complete on `codex/milestone-1-fsm-foundation`: added `EntityState` and `EntityStateMachine` as plain C# primitives.
 - The primitives compile into `Assembly-CSharp` and expose the planned Enter/Update/Exit and Initialize/ChangeState/UpdateActiveState APIs.
@@ -116,6 +116,16 @@ Recommended implementation:
 
 Exit criteria: player can traverse the complete level without camera leaks, collider snags, or sorting errors.  
 Estimate: 4–7 days. Difficulty: medium.
+
+Progress record (2026-09-17):
+
+- Existing content audit found 12 reusable forest background layers, one flat Ground collider, and no authored Tilemap or terrain tileset.
+- Added a dependency-free `CameraFollow2D`, bound it to Player, and configured horizontal clamps at X `0..35.8` while keeping Y fixed at `0`.
+- Added a generated mossy forest terrain texture with Point filtering, no compression, Repeat wrapping, no mipmaps, and 128 PPU. Three Ground-layer chunks extend the walkable collision to X `45.8`; two duplicated background sets cover the extension.
+- Added two raised terrain platforms, parallax on all three background groups, a checkpoint, visible ground hazard, fall boundary, and visible endpoint.
+- Runtime raycasts found continuous Ground at seven seam/interior samples from X `16.7` through `45.7`, including both platforms. Camera checks reached both bounds, parallax moved at its configured factor, checkpoint/hazard/fall/endpoint flows passed, and the Console remained clean.
+- Deliberate implementation adjustment: the project contained no source terrain tileset. The small vertical slice uses modular SpriteRenderer/BoxCollider2D chunks rather than generating an unreliable Tilemap palette. Sorting, Point filtering, 128 PPU, collision continuity, and camera framing were verified through Unity MCP.
+- WallSlide/WallJump remain deferred because the project still has no matching clips or finalized wall-interaction rules; they will not be faked with unrelated animation content.
 
 ## Milestone 3 — Enemy FSM and production combat
 
@@ -242,4 +252,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Start Milestone 2 with a read-only inventory of the existing tiles, backgrounds, sprite import settings, sorting layers, and collision layers. Then author one small traversal level and a dependency-free camera follow/bounds solution through Unity MCP, preserving the established pixel-art direction and current controls.
+Start Milestone 3 by introducing the Enemy FSM and an explicit attack state/cooldown while preserving the existing `Attack` Animator trigger and Animation Events. Then migrate damage into a one-hit-per-swing context before adding hurt, knockback, stun, and health-bar feedback.
