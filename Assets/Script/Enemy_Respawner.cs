@@ -9,7 +9,7 @@ public class Enemy_Respawner : MonoBehaviour
     [SerializeField] private float coolDown = 3f; // Gán giá trị mặc định an toàn (3 giây)
     [Space]
     [SerializeField] private float coolDownDecreaseRate = 0.05f; // Tốc độ giảm thời gian chờ
-    [SerializeField] private float coolDownCap = .5f; // Không cho phép spawn nhanh hơn 1.5 giây/con
+    [SerializeField] private float coolDownCap = 0.7f; // Không cho phép spawn nhanh hơn 0.7 giây/con
 
     private float timer;
     private Transform player;
