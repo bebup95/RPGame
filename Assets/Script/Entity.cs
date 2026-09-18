@@ -16,6 +16,7 @@ public class Entity : MonoBehaviour
     protected EntityHealth health;
     protected EntityCombat combat;
     protected KnockbackReceiver knockbackReceiver;
+    protected StatusEffectReceiver statusEffects;
 
     [Header("Damage feedback")]
     [SerializeField] private Material damageMaterial;
@@ -51,6 +52,7 @@ public class Entity : MonoBehaviour
         health = GetComponent<EntityHealth>();
         combat = GetComponent<EntityCombat>();
         knockbackReceiver = GetComponent<KnockbackReceiver>();
+        statusEffects = GetComponent<StatusEffectReceiver>();
 
         if (health == null)
         {

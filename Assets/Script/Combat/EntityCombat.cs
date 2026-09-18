@@ -12,6 +12,8 @@ public sealed class EntityCombat : MonoBehaviour
     private Entity owner;
     private int swingId;
     private bool swingActive;
+    private float nextSwingDamageMultiplier = 1f;
+    private float activeSwingDamageMultiplier = 1f;
 
     public float AttackRadius => attackRadius;
     public LayerMask TargetMask => targetMask;
@@ -27,6 +29,13 @@ public sealed class EntityCombat : MonoBehaviour
         swingId++;
         hitTargets.Clear();
         swingActive = true;
+        activeSwingDamageMultiplier = nextSwingDamageMultiplier;
+        nextSwingDamageMultiplier = 1f;
+    }
+
+    public void SetNextSwingDamageMultiplier(float multiplier)
+    {
+        nextSwingDamageMultiplier = Mathf.Max(1f, multiplier);
     }
 
     public int DamageTargets()
@@ -63,7 +72,11 @@ public sealed class EntityCombat : MonoBehaviour
             }
 
             Vector2 hitPosition = targetCollider.ClosestPoint(attackPoint.position);
-            DamageContext context = attackData.CreateContext(owner, hitPosition, swingId);
+            DamageContext context = attackData.CreateContext(
+                owner,
+                hitPosition,
+                swingId,
+                activeSwingDamageMultiplier);
             if (damageable.ReceiveDamage(context))
             {
                 hitCount++;

@@ -10,6 +10,8 @@ public sealed class EnemyProfile : ScriptableObject
     [SerializeField, Min(0f)] private float disengageRadius = 10f;
     [SerializeField, Min(0f)] private float attackCooldown = 1.25f;
     [SerializeField] private Color tint = Color.white;
+    [SerializeField, Min(0)] private int experienceReward = 6;
+    [SerializeField, Min(0)] private int currencyReward = 2;
 
     public string DisplayName => displayName;
     public int MaxHealth => maxHealth;
@@ -18,4 +20,6 @@ public sealed class EnemyProfile : ScriptableObject
     public float DisengageRadius => Mathf.Max(detectionRadius, disengageRadius);
     public float AttackCooldown => attackCooldown;
     public Color Tint => tint;
+    public int ExperienceReward => experienceReward;
+    public int CurrencyReward => currencyReward;
 }
