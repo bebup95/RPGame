@@ -1,20 +1,41 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class CharacterStats : MonoBehaviour
 {
     [SerializeField] private CharacterStatProfile profile;
 
-    public int MaxHealth => profile != null ? profile.MaxHealth : 1;
-    public int PhysicalPower => profile != null ? profile.PhysicalPower : 0;
-    public int Armor => profile != null ? profile.Armor : 0;
+    private readonly Dictionary<string, StatModifier> runtimeModifiers = new Dictionary<string, StatModifier>();
+
+    public event Action StatsChanged;
+
+    public int MaxHealth => Mathf.Max(1, (profile != null ? profile.MaxHealth : 1) + SumModifiers(x => x.maxHealth));
+    public int PhysicalPower => Mathf.Max(0, (profile != null ? profile.PhysicalPower : 0) + SumModifiers(x => x.physicalPower));
+    public int Armor => Mathf.Max(0, (profile != null ? profile.Armor : 0) + SumModifiers(x => x.armor));
     public float CriticalChance => profile != null ? profile.CriticalChance : 0f;
     public float CriticalPower => profile != null ? profile.CriticalPower : 1.5f;
     public float HealthRegeneration => profile != null ? profile.HealthRegeneration : 0f;
 
+    public void SetModifier(string sourceId, StatModifier modifier)
+    {
+        if (string.IsNullOrWhiteSpace(sourceId))
+            return;
+
+        runtimeModifiers[sourceId] = modifier;
+        StatsChanged?.Invoke();
+    }
+
+    public void RemoveModifier(string sourceId)
+    {
+        if (!string.IsNullOrWhiteSpace(sourceId) && runtimeModifiers.Remove(sourceId))
+            StatsChanged?.Invoke();
+    }
+
     public int CalculateOutgoingPhysical(int baseDamage, float multiplier, out bool critical)
     {
         float scaledDamage = Mathf.Max(0f, baseDamage + PhysicalPower) * Mathf.Max(0f, multiplier);
-        critical = scaledDamage > 0f && Random.value < Mathf.Clamp01(CriticalChance);
+        critical = scaledDamage > 0f && UnityEngine.Random.value < Mathf.Clamp01(CriticalChance);
         if (critical)
         {
             scaledDamage *= Mathf.Max(1f, CriticalPower);
@@ -48,5 +69,13 @@ public sealed class CharacterStats : MonoBehaviour
     private static int RoundPositive(float value)
     {
         return Mathf.FloorToInt(Mathf.Max(0f, value) + 0.5f);
+    }
+
+    private int SumModifiers(Func<StatModifier, int> selector)
+    {
+        int total = 0;
+        foreach (StatModifier modifier in runtimeModifiers.Values)
+            total += selector(modifier);
+        return total;
     }
 }

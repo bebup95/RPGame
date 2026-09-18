@@ -1,6 +1,6 @@
 # RPGame completion roadmap
 
-Status: Milestones 0–4 complete; Milestone 5 next
+Status: Milestones 0–5 complete; Milestone 6 next
 Prepared: 2026-09-17  
 Effort unit: one focused developer-day is approximately 4–6 productive hours. Learning while following the course can multiply estimates by 1.5–2.5.
 
@@ -215,6 +215,16 @@ Recommended implementation:
 
 Exit criteria: enemy drops an item; player picks it up, inspects it, uses/equips it, sees the stat change, can buy/craft one item, and can transfer one item to storage.  
 Estimate: 11–19 days. Difficulty: high.
+
+Completion record (2026-09-18):
+
+- Defined the five required categories and stable IDs in `Docs/ITEM_ECONOMY_DESIGN.md`; five immutable ItemDefinition assets resolve through one ItemDatabase.
+- Added a deterministic 12-slot Player inventory and 8-slot storage model. Quantities remain runtime state rather than ScriptableObject data; stacking, capacity, invalid-ID, add, remove, and transfer guards are active.
+- Base and Swift enemy prefabs now have guaranteed, data-configured herb/potion drops. The runtime pickup owns a visible category color, trigger collider, and kinematic body, and only disappears after a successful inventory add.
+- Added Weapon/Armor equipment slots and keyed runtime stat modifiers. Iron Sword changes Physical Power by 2; Leather Armor changes Max Health by 2 and Armor by 15; equip, replacement, and unequip preserve inventory capacity rules.
+- Added the healing consumable, two-herb potion recipe, 4-Gold sword merchant offer, and storage deposit/retrieve vertical slices.
+- Added an `I`-toggle inventory/equipment/storage panel with item/category/stack/price tooltips, keyboard navigation/action shortcuts, and seven persistent uGUI button actions.
+- Unity MCP verification passed stable-ID uniqueness, invalid-operation rejection, deterministic `20 + 1` herb stacking, full-capacity rejection, heal `7→10`, weapon `0→2→0`, armor Max HP `10→12→10` and Armor `1→16→1`, purchase `10→6`, recipe `0→1`, storage round trip, enemy death drop, and pickup `0→1`. All changed scripts compiled, scene validation found no broken references, and the final Console was clean.
 
 ## Milestone 6 — Persistence, menus and complete game loop
 

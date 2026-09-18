@@ -8,18 +8,18 @@ This is the durable project handoff. It records verified facts, decisions, compl
 
 RPGame is a small single-scene 2D action game. The player moves and jumps in a fixed side-view arena, protects a stationary character, and defeats enemies that spawn from both sides with an accelerating cadence. The run shows elapsed time and kill count and reaches Game Over when the player or protected character dies.
 
-The core loop exists and the project opens in Unity 6. Milestones 0–4 are complete. The baseline is smoke-tested, Player locomotion/attack is state-driven, the arena is a bounded traversal slice, combat uses reusable components plus an explicit Enemy FSM, and the first RPG progression slice now includes stats, XP/levels, currency, skill points, a three-node branch, and usable Power Strike. Two data-configured enemy profiles spawn through the existing respawner. Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. Items/equipment/economy, persistence, menus/audio, authored automated tests, and standalone build verification remain unfinished.
+The core loop exists and the project opens in Unity 6. Milestones 0–5 are complete. The baseline is smoke-tested, Player locomotion/attack is state-driven, the arena is a bounded traversal slice, combat uses reusable components plus an explicit Enemy FSM, and the RPG vertical slice now includes stats, XP/levels, currency, skill points, a three-node branch, Power Strike, enemy loot, deterministic inventory, consumables, equipment, crafting, a merchant offer, and storage. Two data-configured enemy profiles spawn through the existing respawner. Game Over pauses completely and enemy spawn cadence is capped at 0.7 seconds. Persistence, menus/audio, authored automated tests, and standalone build verification remain unfinished.
 
 ## Verified environment
 
 - Repository: `/Users/lenhat/Developer/RPGame-main`
-- Git: active milestone branch `codex/milestone-4-progression-skill`, based on Milestone 3 commit `31ab49b`.
+- Git: active milestone branch `codex/milestone-5-items-economy`, based on Milestone 4 commit `ee6d7a3`.
 - Unity: `6000.0.72f1` (`b731fd3ae857`).
 - Entry scene: `Assets/Scenes/SampleScene.unity`; it is the only enabled build scene.
 - Packages include URP `17.0.4`, Input System `1.19.0`, uGUI `2.0.0`, Test Framework `1.6.0`, and Unity MCP `v10.0.0` from CoplayDev.
 - Codex Unity MCP endpoint: `http://127.0.0.1:8080/mcp`.
 - Unity MCP is connected and responding through HTTP. On 2026-09-17 it reported one active instance, `RPGame-main@5489ec430c09e367`, with the correct project root and Unity version. Five consecutive read cycles completed successfully without stale state or routing failures (about 1.5–1.8 seconds per cycle).
-- Authored asset inventory at this audit: 46 C# runtime scripts, 2 gameplay prefabs, 9 ScriptableObject data assets (2 enemy, 4 stat, 3 skill), 3 Animator Controllers, 3 materials, 1 generated terrain texture, and 2 scenes (one gameplay scene plus the URP scene template).
+- Authored asset inventory at this audit: 57 C# runtime scripts, 2 gameplay prefabs, 16 ScriptableObject data assets (2 enemy, 5 item, 1 item database, 1 recipe, 4 stat, 3 skill), 3 Animator Controllers, 3 materials, 1 generated terrain texture, and 2 scenes (one gameplay scene plus the URP scene template).
 - No authored EditMode or PlayMode test files were found.
 
 ## Current gameplay and controls
@@ -28,11 +28,13 @@ The core loop exists and the project opens in Unity 6. Milestones 0–4 are comp
 - Jump: Space while grounded and movement is enabled.
 - Player attack: left mouse button while grounded and movement is enabled; `PlayerAttackState` invokes the existing base attack path and Animator trigger `attack`.
 - Skill controls: `K` toggles the skill tree, `1/2/3` unlock its three nodes, and `Q` uses Power Strike while grounded. These remain on the legacy input path.
+- Inventory controls: `I` toggles the inventory; Up/Down select; Enter uses/equips; `B` buys the merchant sword; `C` crafts the potion recipe; `T` stores one selected item; `R` retrieves the first stored item; `U`/`O` unequip weapon/armor. Seven uGUI buttons provide click equivalents for the primary inventory/economy actions.
 - Enemy behavior: Idle, Patrol, Chase, Attack, Hurt, Stunned, Retreat, and Death states select the nearest living Player-layer target.
 - Enemy attack: an explicit Attack-state decision checks the target collider, fires Animator trigger `Attack` once, and observes a profile cooldown; it no longer requests the trigger every frame.
 - Attacks apply a `DamageContext` on the existing Animation Event impact frame. A target can be hit only once per swing, and short hit invulnerability protects against overlapping attackers/events.
-- Character stats calculate physical power, critical hits, armor, elemental resistance, and health regeneration from immutable profiles. Chilled, Burned, and Electrified runtime effects provide slow, damage-over-time, and damage-vulnerability behavior.
+- Character stats calculate physical power, critical hits, armor, elemental resistance, and health regeneration from immutable profiles plus keyed runtime equipment modifiers. Chilled, Burned, and Electrified runtime effects provide slow, damage-over-time, and damage-vulnerability behavior.
 - Enemy deaths grant profile-defined XP/currency. XP requirements are `10 + 5 × (level - 1)` and every level grants one skill point.
+- Base Forest Enemy drops `forest_herb`; Swift Forest Enemy drops `health_potion`. Pickups enter the Player's 12-slot inventory only when capacity permits.
 - Enemy deaths increment the UI kill counter.
 - Elapsed time uses `Time.timeSinceLevelLoad`, so it resets when the scene reloads.
 - Game Over activates a UI panel and sets `Time.timeScale` to `0`; Restart reloads the active scene and `UI.Awake()` restores time scale to `1`.
@@ -51,6 +53,11 @@ The core loop exists and the project opens in Unity 6. Milestones 0–4 are comp
 - `Progression/PlayerProgression.cs`: current-run level, XP, skill points, currency, unlock set, prerequisites, and conflicts.
 - `Progression/SkillDefinition.cs` and `PlayerSkillController.cs`: stable skill data and Power Strike activation/cooldown/branch upgrades.
 - `Progression/ProgressionUI.cs`: HUD progression/cooldown labels and the keyboard-operated skill-tree panel.
+- `Items/ItemDefinition.cs`, `ItemDatabase.cs`, and `RecipeDefinition.cs`: immutable definitions and stable-ID lookup for five item categories and the first recipe.
+- `Items/InventoryModel.cs`: mutable runtime slot quantities, deterministic stacking, capacity, add/remove, and lookup behavior shared by Player inventory and storage.
+- `Items/EquipmentController.cs` and `PlayerInventoryController.cs`: Weapon/Armor equip, replacement, unequip, consumable use, and keyed stat modifier application.
+- `Items/EnemyLootDrop.cs` and `ItemPickup2D.cs`: data-configured enemy drops and visible trigger-based collection.
+- `Items/EconomyServices.cs` and `InventoryUI.cs`: one merchant offer, recipe, storage round trip, tooltips, keyboard navigation, and persistent click bindings.
 - `Player.cs`: legacy input, FSM ownership, movement helpers, attack request, and player-death Game Over.
 - `Enemy.cs`: owns the Enemy FSM, nearest-target selection, collider-accurate attack decisions, profile configuration, and kill-count update.
 - `ObjectToProtect.cs`: faces the player and triggers Game Over on death.
@@ -121,6 +128,24 @@ Overall Milestone 0 result: **pass with one manual feel check outstanding**. The
 - Restart after Game Over: Restart button.
 - Acceptance baseline: scene starts with timer and zero kills; player can move, jump and attack; one valid attack produces one damage/death path; enemies spawn from both sides; enemy deaths increment kills; Player or ObjectToProtect death pauses the game; Restart restores a clean run; Console remains free of gameplay errors and warnings.
 
+## Milestone 5 smoke test — 2026-09-18
+
+Test environment: Unity `6000.0.72f1`, `SampleScene`, Play Mode and Inspector validation through Unity MCP.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Stable item data | Pass | ItemDatabase reported unique IDs for all five categories; invalid IDs and zero-quantity adds were rejected. |
+| Stacking/capacity | Pass | Adding 21 herbs deterministically produced slot quantities `20 + 1`; 12 one-stack armor items filled all Player slots and the 13th add was rejected. |
+| Consumable | Pass | After runtime damage, Health Potion healed Player `7 → 10` and was removed. |
+| Weapon equip/unequip | Pass | Iron Sword changed Physical Power `0 → 2 → 0`. |
+| Armor equip/unequip | Pass | Leather Armor changed Max Health `10 → 12 → 10` and Armor `1 → 16 → 1`. |
+| Merchant | Pass | A sword purchase changed Gold `10 → 6` and added the item. |
+| Crafting | Pass | Two Forest Herbs were consumed and potion quantity changed `0 → 1`. |
+| Storage | Pass | One potion deposited into the 8-slot storage and was retrieved without quantity loss. |
+| Loot and pickup | Pass | Fatal damage to a base Enemy created its configured Forest Herb pickup; invoking the same trigger receiver used by 2D physics changed herb quantity `0 → 1`. |
+| UI/Inspector | Pass | All six InventoryUI references resolve; all seven buttons have exactly one RuntimeOnly persistent call to the expected InventoryUI method. Visual Game-view inspection showed readable inventory, tooltip, equipment/stat, storage, and action-button regions without obscuring the existing HUD. |
+| Compilation/scene/Console | Pass | All 15 changed/new scripts reported zero validation errors; scene validation found zero missing scripts or broken prefabs; final Console contained zero errors and zero warnings. |
+
 ## Decisions and fixed constraints
 
 - Keep the current pixel-art visual direction unless the user explicitly requests a change.
@@ -149,13 +174,14 @@ Overall Milestone 0 result: **pass with one manual feel check outstanding**. The
 - Milestone 2 completed on branch `codex/milestone-2-level-traversal`: added the bounded camera, parallax background extension, generated modular terrain, raised platforms, checkpoint, hazard/fall respawn, and endpoint.
 - Milestone 3 completed on branch `codex/milestone-3-production-combat`: added reusable combat components, Enemy FSM/cooldown, one-hit-per-swing contexts, invulnerability, knockback, world health bars, and two data-configured enemy variants.
 - Milestone 4 completed on branch `codex/milestone-4-progression-skill`: added fixed stat/progression formulas, runtime stat/status systems, XP/levels/currency, skill points, a mutually exclusive three-node skill branch, Power Strike, cooldown/HUD UI, and verified Enemy rewards.
+- Milestone 5 completed on branch `codex/milestone-5-items-economy`: added stable item/recipe definitions, deterministic inventory and storage, enemy loot/pickups, consumables, Weapon/Armor equipment modifiers, one merchant offer, one recipe, and the inventory/economy UI.
 
 ## Open questions and known risks
 
 - `Entity.Awake()` assumes Rigidbody2D, Collider2D, child Animator, and child SpriteRenderer exist. These required components were verified for all current Entity types; future prefabs still need the same validation.
 - Health bars create a minimal runtime SpriteRenderer visual from a generated 1×1 texture. This avoids a new art dependency but should be replaced by authored UI art during Milestone 7 polish if suitable assets become available.
 - Counter, Dash, grounded combo, aerial attack, and unique hurt/death clips remain deferred because the repository still has no matching animation content or finalized bindings/rules.
-- Milestone 4 progression is intentionally current-run only and resets on scene reload; persistence belongs to Milestone 6.
+- Milestone 4–5 progression, inventory, equipment, currency, and storage are intentionally current-run only and reset on scene reload; persistence belongs to Milestone 6.
 - No automated tests currently protect combat, spawning, UI, or restart behavior.
 - A current standalone player build result has not been recorded.
 
@@ -163,10 +189,10 @@ Overall Milestone 0 result: **pass with one manual feel check outstanding**. The
 
 The full proposed completion sequence, effort estimates and milestone exit criteria are maintained in `ROADMAP.md`. The current recommended target is a combat vertical slice first, then an RPG vertical slice, then release hardening.
 
-1. Start Milestone 5 with stable item IDs and immutable item definitions for consumables, weapons, armor, materials, and currency.
-2. Implement the inventory model, stacking/capacity/add/remove/use rules, then add loot pickups before the full UI.
-3. Add equipment/stat modifiers, one recipe, one merchant, and one storage transfer as narrow vertical slices.
-4. Add focused EditMode/PlayMode tests for formula, inventory, ID, and interaction logic.
+1. Start Milestone 6 by freezing a versioned stable-ID save schema for checkpoint, stats/progression, inventory/equipment, skills, storage, and world flags.
+2. Implement safe JSON save/load under `Application.persistentDataPath`, including missing/corrupt-file recovery and schema migration hooks.
+3. Add New Game/Continue plus pause/settings/audio controls without replacing the current input architecture.
+4. Add focused EditMode/PlayMode tests for formula, inventory, ID, save migration, and interaction logic during Milestone 7 hardening.
 5. Produce and smoke-test a standalone build during release hardening.
 
 ## Change log
@@ -188,3 +214,4 @@ The full proposed completion sequence, effort estimates and milestone exit crite
 - 2026-09-18 — Completed Milestone 2. Added two raised terrain platforms, group parallax, Player checkpoint state, a visible ground hazard, an invisible fall boundary, and a visible endpoint marker. The project had no source tileset, so this small slice deliberately uses modular SpriteRenderer/BoxCollider2D chunks instead of manufacturing a fragile Tilemap palette; all scene/Inspector edits were made through Unity MCP. Play Mode verified checkpoint activation at `(19,-1.5)`, hazard and fall respawn with zero velocity, endpoint activation/color, camera clamps at X `0/35.8`, parallax displacement, and continuous Ground hits from X `16.7..45.7` including both platforms. All six Milestone 2 scripts validated with zero diagnostics, the Console was clean, and scene validation found no missing scripts or broken references.
 - 2026-09-18 — Completed Milestone 3 on `codex/milestone-3-production-combat`. Migrated Player, ObjectToProtect, and both Enemy prefabs to `EntityHealth`/`EntityCombat`/`KnockbackReceiver` through Unity MCP; preserved layer masks, AttackPoints, trigger casing, and all three Animation Events. Added Enemy Idle/Patrol/Chase/Attack/Hurt/Stunned/Retreat/Death states, explicit attack cooldown, physical/elemental `DamageContext`, per-swing target de-duplication, hit invulnerability, knockback, health bars, two EnemyProfile assets, and a profile-driven Swift enemy prefab. Runtime tests proved duplicate impact events yield `10→9→9` while a new swing yields `8`, Enemy attacks reduced Player HP only at cooldown-paced impact frames, both profiles spawned naturally, and a player kill still reached kill count `1`. A collider-edge defect found during endurance testing was fixed with `Collider2D.ClosestPoint`. Base and Swift profiles then completed controlled 410-second and 373-second combat simulations with 262 and 237 valid hits respectively and zero Console errors/warnings. Editor returned idle with a clean Console.
 - 2026-09-18 — Completed Milestone 4 on `codex/milestone-4-progression-skill`. Added `Docs/STAT_PROGRESSION_DESIGN.md`, four immutable CharacterStatProfile assets, runtime critical/armor/resistance/regeneration formulas, Chilled/Burned/Electrified effects, profile rewards, current-run XP/level/skill-point/currency state, three SkillDefinition assets, Power Strike and two mutually exclusive upgrades, plus progression/cooldown/skill-tree UI. Unity MCP migrated all actor components and Canvas references. Verified half-up formula results (2.5× base 1 = 3, armor 100→99, 10% fire resistance 100→90), Chilled multiplier 0.65, Electrified raw 4→5, Burned 1-HP tick, regeneration back to full, reward flow `12 XP/4 Gold → level 2, 2/15 XP, 1 SP`, Power Strike `2 HP→0`, 4-second cooldown gating, Quick Recovery 2.5-second cooldown, and symmetric branch conflict rejection. Natural spawning retained stat profiles and the final Console was clean.
+- 2026-09-18 — Completed Milestone 5 on `codex/milestone-5-items-economy`. Added `Docs/ITEM_ECONOMY_DESIGN.md`, five immutable item definitions, ItemDatabase, one recipe, deterministic Player/storage inventories, enemy loot and pickup components, consumable use, Weapon/Armor equip/unequip modifiers, safe currency spending, one merchant offer, crafting and storage services, and the inventory/economy panel with keyboard plus persistent click controls. Unity MCP configured Player, Canvas, economy scene object, both Enemy prefabs, and all asset references. Runtime verification passed stable IDs, stacking/capacity, consume/equip/unequip, purchase, recipe, storage, enemy-death loot, pickup collection, UI bindings, clean scene validation, and a zero-error/warning Console.
