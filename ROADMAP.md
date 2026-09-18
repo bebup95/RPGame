@@ -1,6 +1,6 @@
 # RPGame completion roadmap
 
-Status: Milestone 0 frozen; Milestone 1 ready for reviewed implementation  
+Status: Milestones 0–2 complete; Milestone 3 next
 Prepared: 2026-09-17  
 Effort unit: one focused developer-day is approximately 4–6 productive hours. Learning while following the course can multiply estimates by 1.5–2.5.
 
@@ -14,7 +14,7 @@ The current project is best treated as a completed crash-course prototype. It al
 
 | Area | Current state | Gap to RPG target |
 |---|---|---|
-| Player | Horizontal movement, jump, flip, ground check, one attack | No FSM, wall states, dash, combo, aerial attack, counter, knockback, input abstraction |
+| Player | FSM-driven Idle, Move, Jump, Fall, and one grounded Attack | No wall states, dash, combo, aerial attack, counter, knockback, input abstraction |
 | Enemy | Walks in facing direction, overlap detection, one attack, death | No idle/patrol/chase/battle/retreat/stun FSM or multiple enemy types |
 | Combat | Animation-event hit timing, one damage per hit, flash, death | No damage data, variable damage, invulnerability, knockback, health bars, critical/armor/element/status systems |
 | Level | One fixed arena and background | No authored Tilemap level, camera follow/confiner, parallax system, hazards, checkpoints, scene flow |
@@ -71,12 +71,12 @@ Completion record (2026-09-17):
 Goal: replace the prototype's Update-driven conditionals with the architecture expected by later RPG systems.
 
 1. Introduce `EntityStateMachine` and an abstract `EntityState` with `Enter`, `Update`, and `Exit`.
-2. Separate reusable components: health, combat target detection, status/knockback receiver, and animation-event relay.
+2. Identify reusable component boundaries for health, combat target detection, status/knockback receiving, and animation-event relay; perform the serialized-data migration with Milestone 3 combat data so values move only once.
 3. Implement player states in this order: Idle → Move → Jump/Fall → Attack.
 4. Preserve current animation parameters and hit timing during migration; verify one state at a time.
-5. Add WallSlide and WallJump only after base locomotion is stable.
-6. Add Dash, grounded combo queue, and aerial attack behind explicit cooldown/state gates.
-7. Decide whether to migrate to the installed Input System. Course parity favors it, but this is a deliberate migration: create an action map, preserve current keyboard/mouse bindings, then remove direct legacy input only after equivalence tests.
+5. Defer WallSlide and WallJump until Milestone 2 supplies deliberate wall geometry and suitable visual feedback.
+6. Defer Dash, grounded combo queue, and aerial attack until Milestone 3 defines their clips, bindings, and explicit cooldown/state gates.
+7. Keep the verified legacy input path for the current vertical slice. Reconsider an Input System migration only when a supported device or rebinding requirement justifies it.
 
 Recommended implementation:
 
@@ -87,13 +87,15 @@ Recommended implementation:
 Exit criteria: all locomotion and attack states transition deterministically; controls feel at least as responsive as the baseline; no animation-event or Inspector reference regressions.  
 Estimate: 9–15 days. Difficulty: high. Risk: highest architectural milestone.
 
-Progress record (2026-09-17):
+Completion record (2026-09-18):
 
 - Step 1 complete on `codex/milestone-1-fsm-foundation`: added `EntityState` and `EntityStateMachine` as plain C# primitives.
 - The primitives compile into `Assembly-CSharp` and expose the planned Enter/Update/Exit and Initialize/ChangeState/UpdateActiveState APIs.
-- Player Idle and Move now use `PlayerIdleState` and `PlayerMoveState`; runtime checks preserved `+8/0/-8` horizontal velocities and the Animation Event movement lock.
-- Jump still uses the original grounded Space path and retained velocity `12`; Attack and its Animation Events are unchanged.
-- Next migration slice: Player Jump/Fall only; Attack remains on the current path until locomotion equivalence is verified.
+- Player Idle, Move, Jump, and Fall now use dedicated states. Runtime checks preserved `+8/0/-8` horizontal velocities, jump force `12`, air control, apex/landing transitions, Animator velocity/ground values, and Animation Event movement locks.
+- The user confirmed the focused locomotion checks. Player Attack now uses `PlayerAttackState` while preserving the existing `attack` trigger and `DisableMovementAndJump` → `DamageTargets` → `EnableMovementAndJump` event sequence.
+- Runtime Attack checks passed entry, movement lock, exits to Idle/Move/Fall, target death, and kill-count increment. Script validation and the Unity Console are clean; no serialized asset changed.
+- Milestone 1 exit criteria passed for the available base locomotion and grounded attack: transitions are deterministic, the user confirmed control feel, Animation Events remain intact, and no Inspector reference regressed.
+- Scope was re-sequenced rather than stubbed: the project contains no wall, dash, combo, aerial, hurt, stun, or knockback clips. Wall traversal now belongs to Milestone 2 after level geometry exists; reusable combat components and advanced attacks belong to Milestone 3 alongside their data and content.
 
 ## Milestone 2 — Level, camera and traversal slice
 
@@ -105,6 +107,7 @@ Goal: provide a real level in which the state machine and combat can be evaluate
 4. Add parallax layers without changing the established pixel-art direction.
 5. Add one hazard, one fall/death boundary, one checkpoint, and a clear level endpoint.
 6. Validate pixel-perfect import settings, sprite pivots, sorting layers, and camera resolution.
+7. Add WallSlide/WallJump only if the authored level and available visual content support clear, testable behavior.
 
 Recommended implementation:
 
@@ -113,6 +116,16 @@ Recommended implementation:
 
 Exit criteria: player can traverse the complete level without camera leaks, collider snags, or sorting errors.  
 Estimate: 4–7 days. Difficulty: medium.
+
+Progress record (2026-09-17):
+
+- Existing content audit found 12 reusable forest background layers, one flat Ground collider, and no authored Tilemap or terrain tileset.
+- Added a dependency-free `CameraFollow2D`, bound it to Player, and configured horizontal clamps at X `0..35.8` while keeping Y fixed at `0`.
+- Added a generated mossy forest terrain texture with Point filtering, no compression, Repeat wrapping, no mipmaps, and 128 PPU. Three Ground-layer chunks extend the walkable collision to X `45.8`; two duplicated background sets cover the extension.
+- Added two raised terrain platforms, parallax on all three background groups, a checkpoint, visible ground hazard, fall boundary, and visible endpoint.
+- Runtime raycasts found continuous Ground at seven seam/interior samples from X `16.7` through `45.7`, including both platforms. Camera checks reached both bounds, parallax moved at its configured factor, checkpoint/hazard/fall/endpoint flows passed, and the Console remained clean.
+- Deliberate implementation adjustment: the project contained no source terrain tileset. The small vertical slice uses modular SpriteRenderer/BoxCollider2D chunks rather than generating an unreliable Tilemap palette. Sorting, Point filtering, 128 PPU, collision continuity, and camera framing were verified through Unity MCP.
+- WallSlide/WallJump remain deferred because the project still has no matching clips or finalized wall-interaction rules; they will not be faked with unrelated animation content.
 
 ## Milestone 3 — Enemy FSM and production combat
 
@@ -125,6 +138,8 @@ Goal: turn the current moving damage source into an understandable, testable opp
 5. Add player and enemy health bars, hit VFX, knockback and clear death feedback.
 6. Add counter/stun only after ordinary combat is reliable.
 7. Create a second enemy by data/configuration reuse rather than copying all code.
+8. Separate reusable health, target detection, status/knockback receiving, and Animation Event relay responsibilities during this combat-data migration.
+9. Add Dash, grounded combo, and aerial attack only after their animation clips, cooldown rules, and legacy-input bindings are defined.
 
 Recommended implementation:
 
@@ -237,4 +252,4 @@ Estimated effort:
 
 ## Immediate next action
 
-Integrate Player Jump/Fall states as the next isolated slice. Preserve Space input, jump force `12`, grounded detection, horizontal air control, flip behavior, Animator parameters, Animation Events, and current combat timing; do not migrate Attack until locomotion equivalence is verified.
+Start Milestone 3 by introducing the Enemy FSM and an explicit attack state/cooldown while preserving the existing `Attack` Animator trigger and Animation Events. Then migrate damage into a one-hit-per-swing context before adding hurt, knockback, stun, and health-bar feedback.

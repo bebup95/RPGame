@@ -12,6 +12,12 @@ public sealed class PlayerIdleState : PlayerState
 
     public override void Update()
     {
+        if (!player.IsGrounded)
+        {
+            stateMachine.ChangeState(player.FallState);
+            return;
+        }
+
         if (player.HorizontalInput != 0f)
         {
             stateMachine.ChangeState(player.MoveState);
