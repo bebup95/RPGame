@@ -3,6 +3,7 @@ using UnityEngine;
 public class Enemy_Respawner : MonoBehaviour
 {
     [SerializeField] private GameObject enemyPrefab;
+    [SerializeField] private GameObject[] additionalEnemyPrefabs;
     [SerializeField] private Transform[] respawnPoints;
 
     [Header("Spawn Settings")]
@@ -16,11 +17,24 @@ public class Enemy_Respawner : MonoBehaviour
 
     private void Awake()
     {
-        if (enemyPrefab == null || !enemyPrefab.TryGetComponent(out Enemy _))
+        if (!IsValidEnemyPrefab(enemyPrefab))
         {
             Debug.LogError("Enemy Respawner requires a prefab with an Enemy component.", this);
             enabled = false;
             return;
+        }
+
+        if (additionalEnemyPrefabs != null)
+        {
+            foreach (GameObject additionalPrefab in additionalEnemyPrefabs)
+            {
+                if (!IsValidEnemyPrefab(additionalPrefab))
+                {
+                    Debug.LogError("Enemy Respawner additional prefabs must contain an Enemy component.", this);
+                    enabled = false;
+                    return;
+                }
+            }
         }
 
         if (respawnPoints == null || respawnPoints.Length == 0)
@@ -73,7 +87,8 @@ public class Enemy_Respawner : MonoBehaviour
 
         Vector3 spawnPoint = respawnPoint.position;
 
-        GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint, Quaternion.identity);
+        GameObject selectedPrefab = SelectEnemyPrefab();
+        GameObject newEnemy = Instantiate(selectedPrefab, spawnPoint, Quaternion.identity);
 
         // Đảm bảo player không bị null trước khi so sánh vị trí
         if (player != null && newEnemy.transform.position.x > player.position.x)
@@ -83,5 +98,17 @@ public class Enemy_Respawner : MonoBehaviour
                 enemy.Flip();
             }
         }
+    }
+
+    private GameObject SelectEnemyPrefab()
+    {
+        int additionalCount = additionalEnemyPrefabs != null ? additionalEnemyPrefabs.Length : 0;
+        int selection = Random.Range(0, additionalCount + 1);
+        return selection == 0 ? enemyPrefab : additionalEnemyPrefabs[selection - 1];
+    }
+
+    private static bool IsValidEnemyPrefab(GameObject candidate)
+    {
+        return candidate != null && candidate.TryGetComponent(out Enemy _);
     }
 }

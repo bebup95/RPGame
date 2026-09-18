@@ -171,7 +171,7 @@ GameObject:
   - component: {fileID: 5801182849873349243}
   - component: {fileID: 497935438947908381}
   m_Layer: 7
-  m_Name: Enemy
+  m_Name: EnemySwift
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -212,7 +212,7 @@ MonoBehaviour:
   whatisGround:
     serializedVersion: 2
     m_Bits: 64
-  profile: {fileID: 11400000, guid: 77e4a646124c04947b3d99ecebe65f4e, type: 2}
+  profile: {fileID: 11400000, guid: e81b6fd37fa6c46789f81f4eceb23811, type: 2}
   moveSpeed: 2
   targetDetectionRadius: 7
   disengageRadius: 10

@@ -13,21 +13,15 @@ public class Entity : MonoBehaviour
     protected Collider2D col;
     protected SpriteRenderer sr;
 
-    [Header("Health")]
-    [SerializeField] private int maxHealth = 1;
-    [SerializeField] private int currentHealth;
+    protected EntityHealth health;
+    protected EntityCombat combat;
+    protected KnockbackReceiver knockbackReceiver;
+
+    [Header("Damage feedback")]
     [SerializeField] private Material damageMaterial;
     [SerializeField] private float damagefeedbackDuration = 0.1f;
     private Coroutine damageFeedbackCoroutine;
     private Material originalMaterial;
-
-    [Header("Attack details")]
-    [SerializeField] protected float attackRadius;
-    [SerializeField] protected Transform attackPoint;
-    [SerializeField] protected LayerMask whatIsTarget;
-
-
-
 
     [Header("Collision details")]
     [SerializeField] private float growCheckDistance;
@@ -40,6 +34,9 @@ public class Entity : MonoBehaviour
 
     protected bool isGrounded;
 
+    public int FacingDirection => facingDir;
+    public bool IsKnockbackActive => knockbackReceiver != null && knockbackReceiver.IsActive;
+
     private bool hasXVelocityParameter;
     private bool hasYVelocityParameter;
     private bool hasIsGroundedParameter;
@@ -51,8 +48,20 @@ public class Entity : MonoBehaviour
         col = GetComponent<Collider2D>();
         anim = GetComponentInChildren<Animator>();
         sr = GetComponentInChildren<SpriteRenderer>();
+        health = GetComponent<EntityHealth>();
+        combat = GetComponent<EntityCombat>();
+        knockbackReceiver = GetComponent<KnockbackReceiver>();
+
+        if (health == null)
+        {
+            Debug.LogError($"{name} requires an EntityHealth component.", this);
+            enabled = false;
+            return;
+        }
+
         originalMaterial = sr.material;
-        currentHealth = maxHealth;
+        health.Damaged += HandleDamageReceived;
+        health.Died += HandleDeath;
 
         foreach (AnimatorControllerParameter parameter in anim.parameters)
         {
@@ -61,6 +70,15 @@ public class Entity : MonoBehaviour
             hasIsGroundedParameter |= parameter.nameHash == IsGroundedHash;
         }
 
+    }
+
+    protected virtual void OnDestroy()
+    {
+        if (health != null)
+        {
+            health.Damaged -= HandleDamageReceived;
+            health.Died -= HandleDeath;
+        }
     }
 
     protected virtual void Update()
@@ -73,28 +91,36 @@ public class Entity : MonoBehaviour
 
     public void DamageTargets()
     {
-        Collider2D[] enemyColliders = Physics2D.OverlapCircleAll(attackPoint.position, attackRadius, whatIsTarget);
-
-        foreach (Collider2D enemy in enemyColliders)
-        {
-            Entity entityTarget = enemy.GetComponent<Entity>();
-            if (entityTarget != null)
-                entityTarget.takeDamage();
-        }
+        combat?.DamageTargets();
     }
 
-    private void takeDamage()
+    public void BeginAttackSwing()
     {
-        currentHealth = currentHealth - 1;
-        PlayDamageFeedback();
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        combat?.BeginSwing();
     }
+
+    public void EndAttackSwing()
+    {
+        combat?.EndSwing();
+    }
+
+    private void HandleDamageReceived(DamageContext context)
+    {
+        PlayDamageFeedback();
+        knockbackReceiver?.Apply(context.Knockback, context.StunDuration);
+        OnDamaged(context);
+    }
+
+    private void HandleDeath(DamageContext context)
+    {
+        Die();
+    }
+
+    protected virtual void OnDamaged(DamageContext context) { }
 
     protected virtual void Die()
     {
+        EndAttackSwing();
         anim.enabled = false;
         col.enabled = false;
 
@@ -182,7 +208,5 @@ public class Entity : MonoBehaviour
     {
         Gizmos.DrawLine(transform.position, transform.position + new Vector3(0, -growCheckDistance));
 
-        if (attackPoint != null)
-            Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
     }
 }

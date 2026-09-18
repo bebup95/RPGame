@@ -1277,6 +1277,10 @@ GameObject:
   - component: {fileID: 514055544}
   - component: {fileID: 514055545}
   - component: {fileID: 514055546}
+  - component: {fileID: 514055550}
+  - component: {fileID: 514055549}
+  - component: {fileID: 514055548}
+  - component: {fileID: 514055547}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -1377,15 +1381,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4defb1cd23f9c140b8bb98f1826d9f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 10
-  currentHealth: 0
   damageMaterial: {fileID: 2100000, guid: d2177894bd29bd141ad3916f8550c193, type: 2}
   damagefeedbackDuration: 0.2
-  attackRadius: 1
-  attackPoint: {fileID: 29215867}
-  whatIsTarget:
-    serializedVersion: 2
-    m_Bits: 128
   growCheckDistance: 1.6
   whatisGround:
     serializedVersion: 2
@@ -1404,6 +1401,70 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9651222d356ef40eb8719fedff752dd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &514055547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 514055538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e4d0b16cfd94323a525b1dcbbe3856, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackPoint: {fileID: 29215867}
+  attackRadius: 1
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 128
+  attackData:
+    physicalDamage: 1
+    horizontalKnockback: 8
+    verticalKnockback: 4
+    stunDuration: 0.22
+--- !u!114 &514055548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 514055538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81c131bb680db4dce87eead9de5bd022, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localOffset: {x: 0, y: 1.35, z: 0}
+  size: {x: 1.25, y: 0.12}
+  hideWhenFull: 0
+--- !u!114 &514055549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 514055538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9306cebd28dc4a0594fca7a010e92e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minimumDuration: 0.12
+--- !u!114 &514055550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 514055538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59339458e67ed479fb8ec3f8bdb8ac60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 10
+  invulnerabilityDuration: 0.35
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -2587,6 +2648,9 @@ GameObject:
   - component: {fileID: 729767114}
   - component: {fileID: 729767113}
   - component: {fileID: 729767116}
+  - component: {fileID: 729767119}
+  - component: {fileID: 729767118}
+  - component: {fileID: 729767117}
   m_Layer: 8
   m_Name: ObjectToProtect
   m_TagString: Untagged
@@ -2686,19 +2750,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 952aa57b775f43a48b671f148c2fc054, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 10
-  currentHealth: 0
   damageMaterial: {fileID: 2100000, guid: d2177894bd29bd141ad3916f8550c193, type: 2}
   damagefeedbackDuration: 0.1
-  attackRadius: 0
-  attackPoint: {fileID: 0}
-  whatIsTarget:
-    serializedVersion: 2
-    m_Bits: 0
   growCheckDistance: 0
   whatisGround:
     serializedVersion: 2
     m_Bits: 0
+--- !u!114 &729767117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 729767112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81c131bb680db4dce87eead9de5bd022, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  localOffset: {x: 0, y: 1.1, z: 0}
+  size: {x: 1.1, y: 0.11}
+  hideWhenFull: 0
+--- !u!114 &729767118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 729767112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9306cebd28dc4a0594fca7a010e92e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minimumDuration: 0.12
+--- !u!114 &729767119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 729767112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59339458e67ed479fb8ec3f8bdb8ac60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 10
+  invulnerabilityDuration: 0.35
 --- !u!1 &746564753
 GameObject:
   m_ObjectHideFlags: 0
@@ -3423,6 +3522,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefab: {fileID: 2684336916123566027, guid: c511097fc8faf8e4ea4cd9f7be895cec, type: 3}
+  additionalEnemyPrefabs:
+  - {fileID: 2684336916123566027, guid: 07535f598279f41f4b00927eb20d6eca, type: 3}
   respawnPoints:
   - {fileID: 1132917456}
   - {fileID: 2094447298}
