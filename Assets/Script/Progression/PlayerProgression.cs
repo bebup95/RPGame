@@ -35,6 +35,25 @@ public sealed class PlayerProgression : MonoBehaviour
         ProgressChanged?.Invoke();
     }
 
+    public void AddCurrency(int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        Currency += amount;
+        ProgressChanged?.Invoke();
+    }
+
+    public bool TrySpendCurrency(int amount)
+    {
+        if (amount < 0 || Currency < amount)
+            return false;
+
+        Currency -= amount;
+        ProgressChanged?.Invoke();
+        return true;
+    }
+
     public bool IsSkillUnlocked(string stableId)
     {
         return !string.IsNullOrWhiteSpace(stableId) && unlockedSkillIds.Contains(stableId);

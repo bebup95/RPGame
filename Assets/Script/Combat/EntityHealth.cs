@@ -24,6 +24,14 @@ public sealed class EntityHealth : MonoBehaviour, IDamageable
         stats = GetComponent<CharacterStats>();
         statusEffects = GetComponent<StatusEffectReceiver>();
         CurrentHealth = maxHealth;
+        if (stats != null)
+            stats.StatsChanged += HandleStatsChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (stats != null)
+            stats.StatsChanged -= HandleStatsChanged;
     }
 
     private void Start()
@@ -136,5 +144,10 @@ public sealed class EntityHealth : MonoBehaviour, IDamageable
         Damaged?.Invoke(context);
         if (IsDead)
             Died?.Invoke(context);
+    }
+
+    private void HandleStatsChanged()
+    {
+        ConfigureMaxHealth(stats.MaxHealth, false);
     }
 }

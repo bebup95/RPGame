@@ -265,6 +265,8 @@ public class Enemy : Entity
 
     protected override void Die()
     {
+        GetComponent<EnemyLootDrop>()?.Drop();
+
         if (stateMachine.IsInitialized)
         {
             stateMachine.ChangeState(DeathState);
